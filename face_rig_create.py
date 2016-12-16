@@ -270,6 +270,7 @@ class face_armature:
 		return m
 	
 	def armature_create(self, context):
+		pass
 		# ******************** constants *********************************
 		eye_ik_extending = 5
 		bbone_ratio = 10
@@ -1247,6 +1248,7 @@ class face_armature:
 		
 		
 	def toggle_deform_bone(self, context, action):
+		pass
 		# get ARMATURE
 		ob = context.object
 		if ob.type != 'ARMATURE':
@@ -1270,6 +1272,7 @@ class face_armature:
 		return(True, ('Use Deform ' + action))
 		
 	def clear_skin(self, context, as_ = 'BODY'):
+		pass
 		#mesh = bpy.context.object
 		# ******************** test passoport *****************************
 		mesh_passport = passport().read_passport(context, 'mesh_passport')
@@ -1827,6 +1830,7 @@ class face_armature:
 		return cnt_bone, pose_cnt, name
 	
 	def createMesh(self, name, origin, verts, edges, faces):
+		pass
 		# Create mesh and object
 		me = bpy.data.meshes.new(name+'Mesh')
 		ob = bpy.data.objects.new(name, me)
@@ -1859,6 +1863,7 @@ class face_armature:
 		tmp_rig.layers = layer
 		
 	def stretch_squash_lattice(self, context):
+		pass
 		# ****** GET HEAD POS
 		# start - tmp rig in active layer
 		tmp_rig = bpy.data.objects['metarig']
@@ -1963,6 +1968,7 @@ class face_armature:
 				
 		
 	def stretch_squash_controls(self, context):
+		pass
 		###### EXISTS MESH
 		meshes = passport().read_passport(context, 'mesh_passport')
 		if not meshes[0]:
@@ -2517,6 +2523,7 @@ class face_armature:
 		return(True, message)
 			
 	def edit_eye_global_lattice(self, context, k, metod):
+		pass
 		# get Latt_r
 		try:
 			latt_r = bpy.data.objects['lattice_eye_r']
@@ -2611,6 +2618,7 @@ class face_armature:
 		return(True, 'All Right!')
 	
 	def edit_body_weight(self, context, vtx_grp_name):
+		pass
 		#vtx_grp_name = 'str_squash'
 		
 		# ******************** test passoport *****************************
@@ -2723,7 +2731,49 @@ class face_armature:
 			root_bone.keyframe_insert('location', frame = 1)
 			root_bone.keyframe_insert('scale', frame = 1)
 		return(True, 'finish')
+	
+	def linear_jaw_driver_create(self, context):
+		pass
+		# get obj
+		rig_obj = bpy.context.object
+		if rig_obj.type != 'ARMATURE':
+			return(False, '*** the selected object is not ARMATURE')
+		rig_arm = rig_obj.data
 		
+		if not 'FR_jaw' in rig_obj.pose.bones:
+			return(False, '"FR_jaw" Not Found!')
+		# set ratation mode
+		jaw_bone = rig_obj.pose.bones['FR_jaw']
+		open_name = 'jaw_open'
+		x_name = 'x'
+		max_name = 'max'
+		# --- f curve
+		fcurve = jaw_bone.driver_add('scale', 1)
+		drv = fcurve.driver
+		drv.type = 'SCRIPTED'
+		drv.expression = '1-(1 - cos(%s/2))*sin(abs(%s)*pi/%s)' % (max_name, x_name, max_name)
+		drv.show_debug_info = True
+		# --- var
+		var = drv.variables.new()
+		var.name = x_name
+		var.type = 'TRANSFORMS'
+		# --- var.targ 
+		targ = var.targets[0]
+		targ.id = rig_obj
+		targ.transform_type = 'ROT_X'
+		targ.bone_target = 'FR_jaw'
+		targ.transform_space = 'LOCAL_SPACE'
+		# --- var2
+		var2 = drv.variables.new()
+		var2.name = max_name
+		var2.type = 'SINGLE_PROP'
+		# --- var2.targ
+		targ = var2.targets[0]
+		targ.id_type = 'ARMATURE'
+		targ.id = rig_arm
+		targ.data_path = '["%s"]' % open_name
+		
+		return(True, 'Line Driver created for Jaw!')
 		
 class face_shape_keys:
 	def __init__(self):

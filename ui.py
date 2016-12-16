@@ -14,6 +14,8 @@ class G(object):
 	
 	targets_list = [('None',)*3]
 	
+	face_armature = face_armature()
+	
 	def rebild_targets_list(self, context):
 		G.targets_list = []
 		list_shape_keys = get_data_class().get_list_shape_keys(context, only_origin = 0)
@@ -94,6 +96,7 @@ class FACIALRIG_MakeRig(bpy.types.Panel):
 		col = layout.column(align=1)
 		col.operator("face_rig.tmp_create", icon='OUTLINER_OB_ARMATURE', text = 'Create Meta Rig')
 		col.operator("face_rig.generate", icon='OUTLINER_OB_ARMATURE', text = 'Face Rig Generate')
+		col.operator("face_rig.linear_jaw_driver", icon='OUTLINER_OB_ARMATURE', text = 'Add Linear Driver For Jaw')
 		row = col.row(align = True)
 		row.operator('face_rig.toggle_deform_bone', text = 'Off Deform').action = 'off'
 		row.operator('face_rig.toggle_deform_bone', text = 'On Deform').action = 'on'
@@ -249,13 +252,29 @@ class PASSPORT_add_object(bpy.types.Operator):
 class FACE_rig_generate(bpy.types.Operator):
 	bl_idname = "face_rig.generate"
 	bl_label = "Are You Sure?"
-	#country = bpy.props.StringProperty()
-
+	
 	def execute(self, context):
 		print('***** face rig generate')
 		result = face_armature().armature_create(context)
 		if not result[0]:
 			self.report({'WARNING'}, result[1])
+		return{'FINISHED'}
+		
+	def invoke(self, context, event):
+		return context.window_manager.invoke_props_dialog(self)
+	
+#face_rig.linear_jaw_driver
+class FACE_rig_linear_jaw_driver(bpy.types.Operator):
+	bl_idname = "face_rig.linear_jaw_driver"
+	bl_label = "Are You Sure?"
+	
+	def execute(self, context):
+		result = G.face_armature.linear_jaw_driver_create(context)
+		if not result[0]:
+			self.report({'WARNING'}, result[1])
+		else:
+			self.report({'INFO'}, result[1])
+		
 		return{'FINISHED'}
 		
 	def invoke(self, context, event):
@@ -654,6 +673,7 @@ def register():
 	bpy.utils.register_class(TMP_armature_create)
 	bpy.utils.register_class(PASSPORT_add_object)
 	bpy.utils.register_class(FACE_rig_generate)
+	bpy.utils.register_class(FACE_rig_linear_jaw_driver)
 	bpy.utils.register_class(CLEAR_skin)
 	bpy.utils.register_class(LATTICE_deform)
 	bpy.utils.register_class(SHAPE_keys)
@@ -687,7 +707,8 @@ def unregister():
 	bpy.utils.unregister_class(FACIALRIG_import_export)
 	bpy.utils.unregister_class(TMP_armature_create)	
 	bpy.utils.unregister_class(PASSPORT_add_object)	
-	bpy.utils.unregister_class(FACE_rig_generate)	
+	bpy.utils.unregister_class(FACE_rig_generate)
+	bpy.utils.unregister_class(FACE_rig_linear_jaw_driver)
 	bpy.utils.unregister_class(CLEAR_skin)	
 	bpy.utils.unregister_class(LATTICE_deform)	
 	bpy.utils.unregister_class(SHAPE_keys)	
