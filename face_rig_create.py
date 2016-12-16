@@ -350,6 +350,18 @@ class face_armature:
 			return(False, '****** Rig Not Found!')
 		rig_arm = rig_obj.data
 		
+		# ------------ add properties for jaw setting ------------------
+		bpy.types.Armature.jaw_open =  bpy.props.FloatProperty(name = "jaw_open", default = 1.0,min = 0.0, max = 180)
+		rig_arm.jaw_open = 0.58
+		bpy.types.Armature.jaw_side =  bpy.props.FloatProperty(name = "jaw_side", default = 1.0,min = 0.0, max = 180)
+		rig_arm.jaw_side = 0.2
+		bpy.types.Armature.jaw_incline =  bpy.props.FloatProperty(name = "jaw_incline", default = 1.0,min = 0.0, max = 180)
+		rig_arm.jaw_incline = 0.06
+		bpy.types.Armature.jaw_fwd =  bpy.props.FloatProperty(name = "jaw_fwd", default = 1.0,min = 0.0, max = 100)
+		rig_arm.jaw_fwd = 0.03
+		bpy.types.Armature.jaw_back =  bpy.props.FloatProperty(name = "jaw_back", default = 1.0,min = 0.0, max = 100)
+		rig_arm.jaw_back = 0.015
+		
 		# ------------ create all cnt ------------------
 		self.create_all_cnt(bpy.context)
 
@@ -848,16 +860,23 @@ class face_armature:
 		cns.use_max_z = True
 		cns.max_z = 0
 		
+		# -------- JAW DRIVERS -----------
+		cnt_name = 'cnt'
+		open_name = 'jaw_open'
+		side_name = 'jaw_side'
+		incline_name = 'jaw_incline'
+		fwd_name = 'jaw_fwd'
+		back_name = 'jaw_back'
 		# -- affect to jaw - FWD JAW
 		# --- f curve
 		fcurve = rig_obj.pose.bones['FWD_jaw'].driver_add('location', 1)
 		drv = fcurve.driver
 		drv.type = 'SCRIPTED'
-		drv.expression = 'fwd * 0.03 if fwd>0 else fwd * 0.015'
+		drv.expression = '%s * %s if %s>0 else %s * %s' % (cnt_name, fwd_name, cnt_name, cnt_name, back_name)
 		drv.show_debug_info = True
 		# --- var
 		var = drv.variables.new()
-		var.name = 'fwd'
+		var.name = cnt_name
 		var.type = 'TRANSFORMS'
 		# --- targ
 		targ = var.targets[0]
@@ -865,27 +884,54 @@ class face_armature:
 		targ.transform_type = 'LOC_Y'
 		targ.bone_target = 'jaw_back_fwd'
 		targ.transform_space = 'LOCAL_SPACE'
+		# --- var2
+		var2 = drv.variables.new()
+		var2.name = fwd_name
+		var2.type = 'SINGLE_PROP'
+		# --- var2.targ
+		targ = var2.targets[0]
+		targ.id_type = 'ARMATURE'
+		targ.id = rig_arm
+		targ.data_path = '["%s"]' % fwd_name
+		# --- var3
+		var3 = drv.variables.new()
+		var3.name = back_name
+		var3.type = 'SINGLE_PROP'
+		# --- var3.targ
+		targ = var3.targets[0]
+		targ.id_type = 'ARMATURE'
+		targ.id = rig_arm
+		targ.data_path = '["%s"]' % back_name
 
 		# -- affect to jaw - OPEN JAW
-		# --- f curve
-		open_name = 'open'
+		# set ratation mode
 		jaw_bone = rig_obj.pose.bones['FR_jaw']
-		fcurve = jaw_bone.driver_add('rotation_quaternion', 1)
+		jaw_bone.rotation_mode = 'XZY'
+		# --- f curve
+		fcurve = jaw_bone.driver_add('rotation_euler', 0)
 		drv = fcurve.driver
 		drv.type = 'SCRIPTED'
-		drv.expression = open_name + ' * 0.3'
+		drv.expression = '%s * %s' % (cnt_name, open_name)
 		drv.show_debug_info = True
 		# --- var
 		var = drv.variables.new()
-		#var.name = 'open.var'
-		var.name = open_name
+		var.name = cnt_name
 		var.type = 'TRANSFORMS'
-		# --- targ
+		# --- var.targ 
 		targ = var.targets[0]
 		targ.id = rig_obj
 		targ.transform_type = 'LOC_Y'
 		targ.bone_target = 'jaw.cnt'
 		targ.transform_space = 'LOCAL_SPACE'
+		# --- var2
+		var2 = drv.variables.new()
+		var2.name = open_name
+		var2.type = 'SINGLE_PROP'
+		# --- var2.targ
+		targ = var2.targets[0]
+		targ.id_type = 'ARMATURE'
+		targ.id = rig_arm
+		targ.data_path = '["%s"]' % open_name
 
 		'''
 		# --- modifires
@@ -897,17 +943,14 @@ class face_armature:
 
 		# -- affect to jaw - SIDE JAW
 		# --- f curve
-		side_name = 'side'
-		jaw_bone = rig_obj.pose.bones['FR_jaw']
-		fcurve = jaw_bone.driver_add('rotation_quaternion', 3)
+		fcurve = jaw_bone.driver_add('rotation_euler', 2)
 		drv = fcurve.driver
 		drv.type = 'SCRIPTED'
-		drv.expression = side_name + ' * 0.1'
+		drv.expression = '%s * %s' % (cnt_name, side_name)
 		drv.show_debug_info = True
 		# --- var
 		var = drv.variables.new()
-		#var.name = 'side.var'
-		var.name = side_name
+		var.name = cnt_name
 		var.type = 'TRANSFORMS'
 		# --- targ
 		targ = var.targets[0]
@@ -915,6 +958,15 @@ class face_armature:
 		targ.transform_type = 'LOC_X'
 		targ.bone_target = 'jaw.cnt'
 		targ.transform_space = 'LOCAL_SPACE'
+		# --- var2
+		var2 = drv.variables.new()
+		var2.name = side_name
+		var2.type = 'SINGLE_PROP'
+		# --- var2.targ
+		targ = var2.targets[0]
+		targ.id_type = 'ARMATURE'
+		targ.id = rig_arm
+		targ.data_path = '["%s"]' % side_name
 
 		'''
 		# --- modifires
@@ -926,17 +978,14 @@ class face_armature:
 
 		# -- affect to jaw - INCLINE JAW
 		# --- f curve
-		incline_name = 'incline'
-		jaw_bone = rig_obj.pose.bones['FR_jaw']
-		fcurve = jaw_bone.driver_add('rotation_quaternion', 2)
+		fcurve = jaw_bone.driver_add('rotation_euler', 1)
 		drv = fcurve.driver
 		drv.type = 'SCRIPTED'
-		drv.expression = incline_name + ' * 0.03'
+		drv.expression = '%s * %s' % (cnt_name, incline_name)
 		drv.show_debug_info = True
 		# --- var
 		var = drv.variables.new()
-		#var.name = 'incline.var'
-		var.name = incline_name
+		var.name = cnt_name
 		var.type = 'TRANSFORMS'
 		# --- targ
 		targ = var.targets[0]
@@ -944,6 +993,15 @@ class face_armature:
 		targ.transform_type = 'LOC_X'
 		targ.bone_target = 'jaw.cnt'
 		targ.transform_space = 'LOCAL_SPACE'
+		# --- var2
+		var2 = drv.variables.new()
+		var2.name = incline_name
+		var2.type = 'SINGLE_PROP'
+		# --- var2.targ
+		targ = var2.targets[0]
+		targ.id_type = 'ARMATURE'
+		targ.id = rig_arm
+		targ.data_path = '["%s"]' % incline_name
 
 		'''
 		# --- modifires
