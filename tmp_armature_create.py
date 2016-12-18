@@ -69,6 +69,8 @@ class TMP_create:
 		('FRTMP_brow_out_L', (0.078, self.y, 1.324), (0.078, self.y, 1.344), 'FRTMP_root'),
 		('FRTMP_brow_mid_L', (0.063, self.y, 1.324), (0.063, self.y, 1.344), 'FRTMP_root'),
 		('FRTMP_brow_in_L', (0.048, self.y, 1.324), (0.048, self.y, 1.344), 'FRTMP_root'),
+		('FRTMP_brow_gather_R', (-0.069, self.y, 1.357), (-0.048, self.y, 1.357), 'FRTMP_root'),
+		('FRTMP_brow_gather_L', (0.069, self.y, 1.357), (0.048, self.y, 1.357), 'FRTMP_root'),
 		('FRTMP_blink_R', (-0.161, self.y, 1.26), (-0.161, self.y, 1.305), 'FRTMP_root'),
 		('FRTMP_blink_L', (0.161, self.y, 1.26), (0.161, self.y, 1.305), 'FRTMP_root'),
 		('FRTMP_pupil_R', (0.21, self.y, 1.271), (0.21, self.y, 1.291), 'FRTMP_root'),
@@ -99,37 +101,51 @@ class TMP_create:
 		self.sp_bones_list
 		]
 		
+		self.armature_name = 'face_rig_tmp'
+		
 	def test_exists(self, context):
-		armature_name = 'face_rig_tmp'
 		scene = bpy.context.scene
 		try:
-			obj = bpy.data.objects[armature_name]
+			obj = bpy.data.objects[self.armature_name]
 		except:
 			return(False)
 		else:
 			return(True)
 		
 	def create_bones(self, context):
+		pass
 		# --------- Create Armature --------------
-		armature_name = 'face_rig_tmp'
 		scene = bpy.context.scene
 		try:
-			obj = bpy.data.objects[armature_name]
+			obj = bpy.data.objects[self.armature_name]
 		except:
-			arm = bpy.data.armatures.new(armature_name)
-			obj = bpy.data.objects.new(armature_name, arm)
+			arm = bpy.data.armatures.new(self.armature_name)
+			obj = bpy.data.objects.new(self.armature_name, arm)
 			#obj.draw_type = 'WIRE'
 			scene.objects.link(obj)
 		else:
+			# get position data
+			arm = bpy.data.armatures[self.armature_name]
+			new_all_bones = []
+			for bones_list in self.all_bones:
+				new_bones_list = []
+				for key in bones_list:
+					if not key[0] in arm.edit_bones:
+						continue
+					bone = arm.edit_bones[key[0]]
+					new_key = (key[0], tuple(bone.head), tuple(bone.tail), key[3])
+					new_bones_list.append(new_key)
+				new_all_bones.append(new_bones_list)
+			self.all_bones = new_all_bones
+			
 			# remove armature
 			scene.objects.active = obj
 			bpy.ops.object.mode_set(mode='OBJECT')
-			scene.objects.unlink(obj)
-			bpy.data.objects.remove(obj)
+			bpy.data.objects.remove(obj, do_unlink=True)
 
 			# create armature
-			arm = bpy.data.armatures.new(armature_name)
-			obj = bpy.data.objects.new(armature_name, arm)
+			arm = bpy.data.armatures.new(self.armature_name)
+			obj = bpy.data.objects.new(self.armature_name, arm)
 			#obj.draw_type = 'WIRE'
 			scene.objects.link(obj)
 		
