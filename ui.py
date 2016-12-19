@@ -142,7 +142,7 @@ class FACIALRIG_MakeRig(bpy.types.Panel):
 		
 class FACIALRIG_ShapeKeys(bpy.types.Panel):
 	bl_idname = "shape_keys.add_edit"
-	bl_label = "Shape Keys"
+	bl_label = "Shape Keys: Create, Edit"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "TOOLS"
 	bl_category = "Facial Rig"
@@ -151,36 +151,48 @@ class FACIALRIG_ShapeKeys(bpy.types.Panel):
 	def draw(self, context):
 		layout = self.layout
 		
-		layout.label("Create")
+		layout.label("Create:")
 		col_shk = layout.column(align=1)
 		col_shk.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Shape Keys').action = 'create_shape_keys'
 		col_shk.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Autolid').action = 'create_autolid'
 		col_shk.operator("insert.inbetween", icon='SHAPEKEY_DATA', text = 'Add Inbetween')
 		
-		layout.label("Edit Shape Keys")
+		layout.label("Edit Shape Keys of Brows:")
+		col = layout.column(align=1)
+		
+		layout.label("Edit Shape Keys:")
 		col_eshk = layout.column(align=1)
 		col_eshk.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Central To Side').action = 'central_to_side'
-		col_eshk.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Recalculation Vertex Groups').action = 'recalculation'
-		
-		layout.label("Brows Shape Keys")
+				
+		layout.label("Recalculate Vertex Groups:")
 		col = layout.column(align=1)
-		col.operator("shape_key.brows_all_vertex_groups", icon='SHAPEKEY_DATA', text = 'Recalculation All Vertex Groups').target = 'all'
-		col.operator('shape_key.single_vertex_groups_open_panel').action = 'open'
+		col.operator("shape_key.generate", icon='GROUP_VERTEX', text = '(Lower, Middle) Recalculation All').action = 'recalculation'
+		col.operator("shape_key.brows_all_vertex_groups", icon='GROUP_VERTEX', text = '(Brows) Recalculation All').target = 'all'
+		col.operator('shape_key.single_vertex_groups_open_panel', icon='GROUP_VERTEX', text = '(Brows) Recalculation Single').action = 'open'
 		
 		if G.recalculate_single_brows_vtx_group_panel:
 			for name in G.face_shape_keys.brows_vertex_groups:
 				row = col.row(align=1)
 				row.label(name)
-				row.operator("shape_key.brows_all_vertex_groups", icon='SHAPEKEY_DATA', text = 'To Recalculate').target = name
+				row.operator("shape_key.brows_all_vertex_groups", icon='GROUP_VERTEX', text = 'To Recalculate').target = name
 			row = col.row(align=1)
 			row.operator('shape_key.single_vertex_groups_open_panel', text = 'close').action = 'close'
-		
-		layout.label("Sculpt Shape Keys")
+			
+class FACIALRIG_Shape_Keys_Sculpt(bpy.types.Panel):
+	bl_idname = "shape_keys.sculpt"
+	bl_label = "Shape Keys: Sculpt"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = "TOOLS"
+	bl_category = "Facial Rig"
+	#layout = 'Shape_Keys'
+	
+	def draw(self, context):
+		layout = self.layout
+		layout.label("Sculpt Shape Keys:")
 		col_shk_list = layout.column(align = 1)
 		list_shape_keys = get_data_class().get_list_shape_keys(context, only_origin = 0)
 		for key in list_shape_keys:
-			col_shk_list.operator("shape_key.edit", icon='SHAPEKEY_DATA', text = key).target = key
-			
+			col_shk_list.operator("shape_key.edit", icon='SHAPEKEY_DATA', text = key).target = key			
 		
 		
 class FACIALRIG_import_export(bpy.types.Panel):
@@ -421,7 +433,7 @@ class SHAPE_keys_brows_all_vertex_groups(bpy.types.Operator):
 
 class SHAPE_keys_single_vertex_groups_open_panel(bpy.types.Operator):
 	bl_idname = "shape_key.single_vertex_groups_open_panel"
-	bl_label = "Recalculate Single Vertex Group"
+	bl_label = "(Brows) Recalculate Single Vertex Group"
 	
 	action = bpy.props.StringProperty()
 	
@@ -723,6 +735,7 @@ def register():
 	bpy.utils.register_class(FACIALRIG_Help)
 	bpy.utils.register_class(FACIALRIG_MakeRig)
 	bpy.utils.register_class(FACIALRIG_ShapeKeys)
+	bpy.utils.register_class(FACIALRIG_Shape_Keys_Sculpt)
 	bpy.utils.register_class(FACIALRIG_import_export)
 	bpy.utils.register_class(TMP_armature_create)
 	bpy.utils.register_class(PASSPORT_add_object)
@@ -760,6 +773,7 @@ def unregister():
 	bpy.utils.unregister_class(FACIALRIG_Help)
 	bpy.utils.unregister_class(FACIALRIG_MakeRig)
 	bpy.utils.unregister_class(FACIALRIG_ShapeKeys)
+	bpy.utils.unregister_class(FACIALRIG_Shape_Keys_Sculpt)
 	bpy.utils.unregister_class(FACIALRIG_import_export)
 	bpy.utils.unregister_class(TMP_armature_create)	
 	bpy.utils.unregister_class(PASSPORT_add_object)	

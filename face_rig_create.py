@@ -2839,10 +2839,10 @@ class face_shape_keys:
 		('lip_lower_roll_in.l', 'lip_low_roll_L', 'LOC_Y', 1, 'lip_roll_blend.l'), 
 		('lip_lower_roll_in.m', 'lip_low_roll_M', 'LOC_Y', 1, 'lip_roll_blend.m'), 
 		# --
-		('lip_close', 'lips_close', 'LOC_Y', 1, 'head_blend.m', 'jaw.cnt', 'LOC_Y', -1), 
-		('lip_pinch', 'lips_pinch', 'LOC_Y', 1, 'head_blend.m', 'jaw.cnt', 'LOC_Y', -0.4), 
-		('lip_pinch.r', 'lips_pinch_R', 'LOC_Y', 1, 'lip_blend.r', 'jaw.cnt', 'LOC_Y', -0.4), 
-		('lip_pinch.l', 'lips_pinch_L', 'LOC_Y', 1, 'lip_blend.l', 'jaw.cnt', 'LOC_Y', -0.4), 
+		('lip_close', 'lips_close', 'LOC_Y', 1, 'head_blend.m', 'jaw.cnt', 'LOC_Y', -1, 'on'), 
+		('lip_pinch', 'lips_pinch', 'LOC_Y', 1, 'head_blend.m', 'jaw.cnt', 'LOC_Y', -0.4, 'on'), 
+		('lip_pinch.r', 'lips_pinch_R', 'LOC_Y', 1, 'lip_blend.r', 'jaw.cnt', 'LOC_Y', -0.4, 'on'), 
+		('lip_pinch.l', 'lips_pinch_L', 'LOC_Y', 1, 'lip_blend.l', 'jaw.cnt', 'LOC_Y', -0.4, 'on'), 
 		#('lip_upper_sqz', 'lip_up_sqz', 'LOC_Y', 1, 'head_blend.m'), 
 		('lip_upper_sqz', 'lip_up_raise', 'LOC_Y', -1, 'head_blend.m'), 
 		#('lip_upper_sqz.r', 'lip_up_sqz_R', 'LOC_Y', 1, 'lip_blend.r'), 
@@ -2881,12 +2881,12 @@ class face_shape_keys:
 		('brow_raiser', '', '', '', 'head_blend.m'),
 		('brow_raiser_out', '', '', '', 'head_blend.m'),
 		('brow_raiser_in', '', '', '', 'head_blend.m'),
-		('brow_raiser_out.r', 'brow_out_R', 'LOC_Y', 1, 'brow_out_blend.r'),# 'brow_mid_R', 'LOC_Y', 1
+		('brow_raiser_out.r', 'brow_out_R', 'LOC_Y', 1, 'brow_out_blend.r', 'brow_mid_R', 'LOC_Y', 1, 'off'),# 'brow_mid_R', 'LOC_Y', 1
 		('brow_raiser_mid.r', 'brow_mid_R', 'LOC_Y', 1, 'brow_raiser_blend.r'),
-		('brow_raiser_in.r', 'brow_in_R', 'LOC_Y', 1, 'brow_raiser_in_blend.r'),# 'brow_mid_R', 'LOC_Y', 1
-		('brow_raiser_out.l', 'brow_out_L', 'LOC_Y', 1, 'brow_out_blend.l'), # 'brow_mid_L', 'LOC_Y', 1
+		('brow_raiser_in.r', 'brow_in_R', 'LOC_Y', 1, 'brow_raiser_in_blend.r', 'brow_mid_R', 'LOC_Y', 1, 'off'),# 'brow_mid_R', 'LOC_Y', 1
+		('brow_raiser_out.l', 'brow_out_L', 'LOC_Y', 1, 'brow_out_blend.l', 'brow_mid_L', 'LOC_Y', 1, 'off'), # 'brow_mid_L', 'LOC_Y', 1
 		('brow_raiser_mid.l', 'brow_mid_L', 'LOC_Y', 1, 'brow_raiser_blend.l'),
-		('brow_raiser_in.l', 'brow_in_L', 'LOC_Y', 1, 'brow_raiser_in_blend.l'),# 'brow_mid_L', 'LOC_Y', 1
+		('brow_raiser_in.l', 'brow_in_L', 'LOC_Y', 1, 'brow_raiser_in_blend.l', 'brow_mid_L', 'LOC_Y', 1, 'off'),# 'brow_mid_L', 'LOC_Y', 1
 		('brow_gatherer', '', '', '', 'head_blend.m'),
 		('brow_gatherer.r', 'brow_gather_R', 'LOC_Y', 1, 'brow_gatherer_blend.r'),
 		('brow_gatherer.l', 'brow_gather_L', 'LOC_Y', 1, 'brow_gatherer_blend.l'),
@@ -2895,10 +2895,10 @@ class face_shape_keys:
 		('brow_lower_in', '', '', '', 'head_blend.m'),
 		('brow_lower_out.r', 'brow_out_R', 'LOC_Y', -1, 'brow_out_blend.r'),
 		('brow_lower_mid.r', 'brow_mid_R', 'LOC_Y', -1, 'brow_lower_blend.r'),
-		('brow_lower_in.r', 'brow_in_R', 'LOC_Y', -1, 'brow_lower_in_blend.r'),# 'brow_mid_R', 'LOC_Y', -1
+		('brow_lower_in.r', 'brow_in_R', 'LOC_Y', -1, 'brow_lower_in_blend.r', 'brow_mid_R', 'LOC_Y', -1, 'off'),# 'brow_mid_R', 'LOC_Y', -1
 		('brow_lower_out.l', 'brow_out_L', 'LOC_Y', -1, 'brow_out_blend.l'),
 		('brow_lower_mid.l', 'brow_mid_L', 'LOC_Y', -1, 'brow_lower_blend.l'),
-		('brow_lower_in.l', 'brow_in_L', 'LOC_Y',  -1, 'brow_lower_in_blend.l'),# 'brow_mid_L', 'LOC_Y', -1
+		('brow_lower_in.l', 'brow_in_L', 'LOC_Y',  -1, 'brow_lower_in_blend.l', 'brow_mid_L', 'LOC_Y', -1, 'off'),# 'brow_mid_L', 'LOC_Y', -1
 		#BLINK
 		('blink_up_lid',  '',  '',  '',  'head_blend.m'),
 		('blink_up_lid.r',  'blink_R',  'LOC_X',  1,  'head_blend.r'),
@@ -3342,6 +3342,7 @@ class face_shape_keys:
 				k_cnt = data[5]
 				k_loc = data[6]
 				k_dat = data[7]
+				action = data[8]
 			
 			except:
 				# old construction
@@ -3404,8 +3405,11 @@ class face_shape_keys:
 				targ.transform_space = 'LOCAL_SPACE'
 				
 				# expression (var * abs(k*2.5) if  abs(k) < 0.4 else var)
-				mn = 1/abs(k_dat)
-				drv.expression = 'var * abs(correct*' + str(mn) + ') if  abs(correct) < ' + str(abs(k_dat)) + ' else var'
+				if action == 'on':
+					mn = 1/abs(k_dat)
+					drv.expression = 'var * abs(correct*' + str(mn) + ') if  abs(correct) < ' + str(abs(k_dat)) + ' else var'
+				elif action == 'off':
+					drv.expression = 'var *(1 - abs(correct/%s))' % str(k_dat)
 
 				# remove modifiers
 				fmod = f_curve.modifiers[0]
