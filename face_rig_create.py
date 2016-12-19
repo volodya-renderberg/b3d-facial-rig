@@ -47,7 +47,7 @@ class passport:
 			try:
 				work_dict = data[dict_name]
 			except:
-				return(False, ('****** ' + dict_name + ' not found in \"rig_meta_data\"!'))
+				return(False, '****** %s not found in \"rig_meta_data\"!' % dict_name)
 			
 			return(True, work_dict)
 						
@@ -1236,6 +1236,7 @@ class face_armature:
 		'''
 		# ------------ create edit vertex groups -------
 		face_shape_keys().create_edit_vertes_groups(bpy.context)
+		face_shape_keys().create_edit_brows_vertes_groups(bpy.context, 'all')
 		
 		# ------------ create lattice (str/sq, eye_global) ----------
 		bpy.context.scene.objects.active = rig_obj
@@ -2876,20 +2877,29 @@ class face_shape_keys:
 		('cheek_raise', 'cheeks', 'LOC_Y', 1, 'head_blend.m'), 
 		('cheek_raise.r', 'cheek_R', 'LOC_Y', 1, 'head_blend.r'), 
 		('cheek_raise.l', 'cheek_L', 'LOC_Y', 1, 'head_blend.l'),
+		#BROWS
 		('brow_raiser', '', '', '', 'head_blend.m'),
-		('brow_raiser_out.r', 'brow_out_R', 'LOC_Y', 1, 'brow_out_blend.r'),
-		('brow_raiser_mid.r', 'brow_mid_R', 'LOC_Y', 1, 'brow_m_blend.r'),
-		('brow_raiser_in.r', 'brow_in_R', 'LOC_Y', 1, 'brow_in_blend.r'),
-		('brow_raiser_out.l', 'brow_out_L', 'LOC_Y', 1, 'brow_out_blend.l'),
-		('brow_raiser_mid.l', 'brow_mid_L', 'LOC_Y', 1, 'brow_m_blend.l'),
-		('brow_raiser_in.l', 'brow_in_L', 'LOC_Y', 1, 'brow_in_blend.l'),
+		('brow_raiser_out', '', '', '', 'head_blend.m'),
+		('brow_raiser_in', '', '', '', 'head_blend.m'),
+		('brow_raiser_out.r', 'brow_out_R', 'LOC_Y', 1, 'brow_out_blend.r'),# 'brow_mid_R', 'LOC_Y', 1
+		('brow_raiser_mid.r', 'brow_mid_R', 'LOC_Y', 1, 'brow_raiser_blend.r'),
+		('brow_raiser_in.r', 'brow_in_R', 'LOC_Y', 1, 'brow_raiser_in_blend.r'),# 'brow_mid_R', 'LOC_Y', 1
+		('brow_raiser_out.l', 'brow_out_L', 'LOC_Y', 1, 'brow_out_blend.l'), # 'brow_mid_L', 'LOC_Y', 1
+		('brow_raiser_mid.l', 'brow_mid_L', 'LOC_Y', 1, 'brow_raiser_blend.l'),
+		('brow_raiser_in.l', 'brow_in_L', 'LOC_Y', 1, 'brow_raiser_in_blend.l'),# 'brow_mid_L', 'LOC_Y', 1
+		('brow_gatherer', '', '', '', 'head_blend.m'),
+		('brow_gatherer.r', 'brow_gather_R', 'LOC_Y', 1, 'brow_gatherer_blend.r'),
+		('brow_gatherer.l', 'brow_gather_L', 'LOC_Y', 1, 'brow_gatherer_blend.l'),
 		('brow_lower', '', '', '', 'head_blend.m'),
+		('brow_lower_out', '', '', '', 'head_blend.m'),
+		('brow_lower_in', '', '', '', 'head_blend.m'),
 		('brow_lower_out.r', 'brow_out_R', 'LOC_Y', -1, 'brow_out_blend.r'),
-		('brow_lower_mid.r', 'brow_mid_R', 'LOC_Y', -1, 'brow_m_blend.r'),
-		('brow_lower_in.r', 'brow_in_R', 'LOC_Y', -1, 'brow_in_blend.r'),
+		('brow_lower_mid.r', 'brow_mid_R', 'LOC_Y', -1, 'brow_lower_blend.r'),
+		('brow_lower_in.r', 'brow_in_R', 'LOC_Y', -1, 'brow_lower_in_blend.r'),# 'brow_mid_R', 'LOC_Y', -1
 		('brow_lower_out.l', 'brow_out_L', 'LOC_Y', -1, 'brow_out_blend.l'),
-		('brow_lower_mid.l',  'brow_mid_L', 'LOC_Y', -1, 'brow_m_blend.l'), 
-		('brow_lower_in.l',  'brow_in_L',  'LOC_Y',  -1,  'brow_in_blend.l'),
+		('brow_lower_mid.l', 'brow_mid_L', 'LOC_Y', -1, 'brow_lower_blend.l'),
+		('brow_lower_in.l', 'brow_in_L', 'LOC_Y',  -1, 'brow_lower_in_blend.l'),# 'brow_mid_L', 'LOC_Y', -1
+		#BLINK
 		('blink_up_lid',  '',  '',  '',  'head_blend.m'),
 		('blink_up_lid.r',  'blink_R',  'LOC_X',  1,  'head_blend.r'),
 		('blink_up_lid.l',  'blink_L',  'LOC_X',  1,  'head_blend.l'),
@@ -2925,8 +2935,12 @@ class face_shape_keys:
 		'cheek_suck':('cheek_suck.r', 'cheek_suck.l'),
 		'cheek_sqz':('cheek_sqz.r', 'cheek_sqz.l'),
 		'cheek_raise':('cheek_raise.r', 'cheek_raise.l'),
-		'brow_raiser':('brow_raiser_out.r', 'brow_raiser_mid.r', 'brow_raiser_in.r', 'brow_raiser_out.l', 'brow_raiser_mid.l', 'brow_raiser_in.l'),
-		'brow_lower':('brow_lower_out.r', 'brow_lower_mid.r', 'brow_lower_in.r', 'brow_lower_out.l', 'brow_lower_mid.l', 'brow_lower_in.l'),
+		'brow_raiser':('brow_raiser_mid.r', 'brow_raiser_mid.l'),
+		'brow_raiser_out':('brow_raiser_out.r', 'brow_raiser_out.l'),
+		'brow_raiser_in':('brow_raiser_in.r', 'brow_raiser_in.l'),
+		'brow_lower':('brow_lower_mid.r', 'brow_lower_mid.l'),
+		'brow_lower_out':('brow_lower_out.r', 'brow_lower_out.l'),
+		'brow_lower_in':('brow_lower_in.r', 'brow_lower_in.l'),
 		'autolid_low':('autolid_low.r', 'autolid_low.l'),
 		'autolid_up':('autolid_up.r', 'autolid_up.l'),
 		'autolid_out':('autolid_out.r', 'autolid_out.l'),
@@ -2952,6 +2966,15 @@ class face_shape_keys:
 		('autolid_in.l', 'head_blend.l'),
 		]
 		
+		self.brows_vertex_groups = [
+		'brow_out_blend',
+		'brow_raiser_blend',
+		'brow_raiser_in_blend',
+		'brow_gatherer_blend',
+		'brow_lower_blend',
+		'brow_lower_in_blend',
+		]
+		
 		# -- rig data
 		try:
 			self.rig_obj = bpy.data.objects[G.rig_name]
@@ -2974,6 +2997,7 @@ class face_shape_keys:
 		
 		
 	def create_shape_keys(self, context):
+		pass
 		# -- pose data
 		poses = {
 		'jaw_open_C':(0.0, -1.0, 0.0),
@@ -3016,6 +3040,9 @@ class face_shape_keys:
 
 		# -- create vertex_groups
 		vtx_groups = self.create_edit_vertes_groups(bpy.context)
+		res, messege = face_shape_keys().create_edit_brows_vertes_groups(bpy.context, 'all')
+		if not res:
+			return(False, messege)
 
 		# -- rig to POSE mode
 		scene = bpy.context.scene
@@ -3456,6 +3483,7 @@ class face_shape_keys:
 		return(True, 'All Right!')
 		
 	def create_edit_vertes_groups(self, context):
+		pass
 		# ******************** test passoport *****************************
 		mesh_passport = passport().read_passport(context, 'mesh_passport')
 		if mesh_passport[0]:
@@ -3775,7 +3803,7 @@ class face_shape_keys:
 			else:
 				nose_l_vtx.add([v.index], 0.0, 'REPLACE')
 		vtx_groups['nose_blend.l'] = nose_l_vtx
-
+		'''
 		# ***************** BROWS **************************
 		# -- get OUT position
 		try:
@@ -3817,10 +3845,8 @@ class face_shape_keys:
 				if (v.co[0] > a) and (v.co[0] < b):
 					# calculate weight
 					x = v.co[0]
-					'''
 					# line interpolation
-					weight = 1 - (x - b)/(a - b)
-					'''
+					#weight = 1 - (x - b)/(a - b)
 					# cos interpolation
 					weight = (math.cos(math.pi*((x-a)/(b-a))) +1)/2
 
@@ -3844,10 +3870,8 @@ class face_shape_keys:
 				if (v.co[0] > a) and (v.co[0] < b):
 					# calculate weight
 					x = v.co[0]
-					'''
 					# line interpolation
-					weight = 1 - (x - b)/(a - b)
-					'''
+					#weight = 1 - (x - b)/(a - b)
 					# cos interpolation
 					weight = (math.cos(math.pi*((x-a)/(b-a)) - math.pi) +1)/2
 
@@ -3872,10 +3896,8 @@ class face_shape_keys:
 				if (v.co[0] > a) and (v.co[0] < b):
 					# calculate weight
 					x = v.co[0]
-					'''
 					# line interpolation
-					weight = 1 - (x - b)/(a - b)
-					'''
+					#weight = 1 - (x - b)/(a - b)
 					# cos interpolation
 					weight = (math.cos(math.pi*((x-a)/(b-a)) - math.pi) +1)/2
 
@@ -3888,10 +3910,8 @@ class face_shape_keys:
 				if (v.co[0] > a) and (v.co[0] < b):
 					# calculate weight
 					x = v.co[0]
-					'''
 					# line interpolation
-					weight = 1 - (x - b)/(a - b)
-					'''
+					#weight = 1 - (x - b)/(a - b)
 					# cos interpolation
 					weight = (math.cos(math.pi*((x-a)/(b-a))) +1)/2
 
@@ -3916,10 +3936,8 @@ class face_shape_keys:
 				if (v.co[0] > a) and (v.co[0] < b):
 					# calculate weight
 					x = v.co[0]
-					'''
 					# line interpolation
-					weight = 1 - (x - b)/(a - b)
-					'''
+					#weight = 1 - (x - b)/(a - b)
 					# cos interpolation
 					weight = (math.cos(math.pi*((x-a)/(b-a)) - math.pi) +1)/2
 
@@ -3932,10 +3950,8 @@ class face_shape_keys:
 				if (v.co[0] > a) and (v.co[0] < b):
 					# calculate weight
 					x = v.co[0]
-					'''
 					# line interpolation
-					weight = 1 - (x - b)/(a - b)
-					'''
+					#weight = 1 - (x - b)/(a - b)
 					# cos interpolation
 					weight = (math.cos(math.pi*((x-a)/(b-a))) +1)/2
 
@@ -3960,10 +3976,8 @@ class face_shape_keys:
 				if (v.co[0] > a) and (v.co[0] < b):
 					# calculate weight
 					x = v.co[0]
-					'''
 					# line interpolation
-					weight = 1 - (x - b)/(a - b)
-					'''
+					#weight = 1 - (x - b)/(a - b)
 					# cos interpolation
 					weight = (math.cos(math.pi*((x-a)/(b-a)) - math.pi) +1)/2
 
@@ -3976,10 +3990,8 @@ class face_shape_keys:
 				if (v.co[0] > a) and (v.co[0] < b):
 					# calculate weight
 					x = v.co[0]
-					'''
 					# line interpolation
-					weight = 1 - (x - b)/(a - b)
-					'''
+					#weight = 1 - (x - b)/(a - b)
 					# cos interpolation
 					weight = (math.cos(math.pi*((x-a)/(b-a))) +1)/2
 
@@ -4004,10 +4016,8 @@ class face_shape_keys:
 				if (v.co[0] > a) and (v.co[0] < b):
 					# calculate weight
 					x = v.co[0]
-					'''
 					# line interpolation
-					weight = 1 - (x - b)/(a - b)
-					'''
+					#weight = 1 - (x - b)/(a - b)
 					# cos interpolation
 					weight = (math.cos(math.pi*((x-a)/(b-a)) - math.pi) +1)/2
 
@@ -4020,10 +4030,8 @@ class face_shape_keys:
 				if (v.co[0] > a) and (v.co[0] < b):
 					# calculate weight
 					x = v.co[0]
-					'''
 					# line interpolation
-					weight = 1 - (x - b)/(a - b)
-					'''
+					#weight = 1 - (x - b)/(a - b)
 					# cos interpolation
 					weight = (math.cos(math.pi*((x-a)/(b-a))) +1)/2
 
@@ -4033,6 +4041,7 @@ class face_shape_keys:
 			else:
 				brow_in_l_vtx.add([v.index], 0.0, 'REPLACE')
 		vtx_groups['brow_in_blend.l'] = brow_in_l_vtx
+		'''
 		
 		# **************** STRETCH SQUASH
 		try:
@@ -4049,6 +4058,102 @@ class face_shape_keys:
 
 		# ******** FIN		
 		return vtx_groups
+	
+	def create_edit_brows_vertes_groups(self, context, target): # name 'all' or from "self.brows_vertex_groups"
+		pass
+		# -- test passoport
+		res, mesh_passport = passport().read_passport(context, 'mesh_passport')
+		if not res:
+			return(False, mesh_passport)
+		
+		# -- get mesh ob
+		try:
+			body_name = mesh_passport['body'][0]
+		except:
+			return(False, '****** the name of the "body" is not in the passport!')
+		else:
+			ob = bpy.data.objects[body_name]
+		assert ob.type == 'MESH'
+		
+		# -- rig to EDIT mode
+		rig_obj = bpy.data.objects[G.rig_name]
+		scene = bpy.context.scene
+		scene.objects.active = rig_obj
+		bpy.ops.object.mode_set(mode = 'EDIT')
+		
+		# -- get tmp.bone position
+		try:
+			name_ = ('FR_' + self.label_tmp_bones[0])
+			bone = rig_obj.data.edit_bones[name_]
+		except:
+			return(False, '****** %s Not Found!' % name_)
+		head = (bone.head[0],bone.head[1],bone.head[2])
+		tail = (bone.tail[0], bone.tail[1], bone.tail[2])
+		
+		# -- get tmp brow_in position
+		try:
+			name_ = ('FR_' + self.label_tmp_bones[2])
+			bone = rig_obj.data.edit_bones[name_]
+		except:
+			return(False, '****** ' + name_ + ' Not Found!')
+		tail_in = (bone.tail[0], bone.tail[1], bone.tail[2])
+		
+		# -- get vtx group list
+		list_vtx_groups = []
+		if target == 'all':
+			list_vtx_groups = self.brows_vertex_groups
+		else:
+			if target not in self.brows_vertex_groups:
+				return(False, 'this name:"%s" is not on this list: %s' % (target, json.dumps(self.brows_vertex_groups)))
+			list_vtx_groups = [target]
+		
+		# -- make vtx groups
+		for name in list_vtx_groups:
+			for side in ['r','l']:
+				vtx_name = '%s.%s' % (name, side)
+				if vtx_name in ob.vertex_groups:
+					brow_vtx = ob.vertex_groups[vtx_name]
+				else:
+					brow_vtx = ob.vertex_groups.new(vtx_name)
+				for v in ob.data.vertices:
+					if v.co[2] >= head[2]:
+						if side == 'r':
+							brow_vtx.add([v.index], 1.0, 'REPLACE')
+							# Rigt Part
+							a = tail_in[0]
+							b = 0 - tail_in[0]
+							if (v.co[0] > a) and (v.co[0] < b):
+								# calculate weight
+								x = v.co[0]
+								# cos interpolation
+								weight = (math.cos(math.pi*((x-b)/(a-b)) - math.pi) +1)/2
+
+								brow_vtx.add([v.index], weight, 'REPLACE')
+							elif v.co[0] < a:
+								brow_vtx.add([v.index], 1.0, 'REPLACE')
+							elif v.co[0] > b:
+								brow_vtx.add([v.index], 0.0, 'REPLACE')
+						elif side == 'l':
+							brow_vtx.add([v.index], 1.0, 'REPLACE')
+							# Rigt Part
+							a = 0 - tail_in[0]
+							b = tail_in[0]
+							if (v.co[0] < a) and (v.co[0] > b):
+								# calculate weight
+								x = v.co[0]
+								# cos interpolation
+								weight = (math.cos(math.pi*((x-b)/(a-b)) - math.pi) +1)/2
+
+								brow_vtx.add([v.index], weight, 'REPLACE')
+							elif v.co[0] > a:
+								brow_vtx.add([v.index], 1.0, 'REPLACE')
+							elif v.co[0] < b:
+								brow_vtx.add([v.index], 0.0, 'REPLACE')
+					else:
+						brow_vtx.add([v.index], 0.0, 'REPLACE')
+		
+		return(True, 'Recalculated %s!' % target)
+			
 		
 	def autolids_base(self, context):
 		# ******************** test passoport *****************************

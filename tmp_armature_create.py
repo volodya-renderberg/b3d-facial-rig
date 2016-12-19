@@ -124,6 +124,10 @@ class TMP_create:
 			#obj.draw_type = 'WIRE'
 			scene.objects.link(obj)
 		else:
+			# to edit mode
+			scene.objects.active = obj
+			bpy.ops.object.mode_set(mode='EDIT')
+			
 			# get position data
 			arm = bpy.data.armatures[self.armature_name]
 			new_all_bones = []
@@ -131,6 +135,7 @@ class TMP_create:
 				new_bones_list = []
 				for key in bones_list:
 					if not key[0] in arm.edit_bones:
+						new_bones_list.append(key)
 						continue
 					bone = arm.edit_bones[key[0]]
 					new_key = (key[0], tuple(bone.head), tuple(bone.tail), key[3])
@@ -138,16 +143,23 @@ class TMP_create:
 				new_all_bones.append(new_bones_list)
 			self.all_bones = new_all_bones
 			
+			#remove bones
+			for bone in arm.edit_bones:
+				arm.edit_bones.remove(bone)
+			
+			'''
 			# remove armature
 			scene.objects.active = obj
 			bpy.ops.object.mode_set(mode='OBJECT')
 			bpy.data.objects.remove(obj, do_unlink=True)
+			bpy.data.armatures.remove(arm, do_unlink=True)
 
 			# create armature
 			arm = bpy.data.armatures.new(self.armature_name)
 			obj = bpy.data.objects.new(self.armature_name, arm)
 			#obj.draw_type = 'WIRE'
 			scene.objects.link(obj)
+			'''
 		
 		scene.objects.active = obj
 		bpy.ops.object.mode_set(mode='EDIT')

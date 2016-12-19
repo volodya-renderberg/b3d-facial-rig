@@ -11,21 +11,31 @@ import webbrowser
 class G(object):
 	import_single_panel = False
 	import_single_from_all_panel = False
+	recalculate_single_brows_vtx_group_panel = False
 	
 	targets_list = [('None',)*3]
+	brows_vtx_list = [('None',)*3]
 	
 	face_armature = face_armature()
+	face_shape_keys = face_shape_keys()
 	
 	def rebild_targets_list(self, context):
+		###
 		G.targets_list = []
 		list_shape_keys = get_data_class().get_list_shape_keys(context, only_origin = 0)
 		for key in list_shape_keys:
 			G.targets_list.append((key,)*3)
+		###
+		G.brows_vtx_list = []
+		for key in G.face_shape_keys.brows_vertex_groups:
+			G.brows_vtx_list.append((key,)*3)
+		###
 		set_targets_list()
-	
+
 def set_targets_list():
 	bpy.types.Scene.my_num_of_between = bpy.props.IntProperty(name = 'Num of Between:', min = 1, default = 1)
 	bpy.types.Scene.my_targets_list_enum = bpy.props.EnumProperty(items = G.targets_list, name = 'Targets:', update = None)
+	bpy.types.Scene.brows_vtx_list = bpy.props.EnumProperty(items = G.brows_vtx_list, name = 'Vertex_Groups:', update = None)
 
 class get_data_class():
 	def __init__(self):
@@ -151,6 +161,19 @@ class FACIALRIG_ShapeKeys(bpy.types.Panel):
 		col_eshk = layout.column(align=1)
 		col_eshk.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Central To Side').action = 'central_to_side'
 		col_eshk.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Recalculation Vertex Groups').action = 'recalculation'
+		
+		layout.label("Brows Shape Keys")
+		col = layout.column(align=1)
+		col.operator("shape_key.brows_all_vertex_groups", icon='SHAPEKEY_DATA', text = 'Recalculation All Vertex Groups').target = 'all'
+		col.operator('shape_key.single_vertex_groups_open_panel').action = 'open'
+		
+		if G.recalculate_single_brows_vtx_group_panel:
+			for name in G.face_shape_keys.brows_vertex_groups:
+				row = col.row(align=1)
+				row.label(name)
+				row.operator("shape_key.brows_all_vertex_groups", icon='SHAPEKEY_DATA', text = 'To Recalculate').target = name
+			row = col.row(align=1)
+			row.operator('shape_key.single_vertex_groups_open_panel', text = 'close').action = 'close'
 		
 		layout.label("Sculpt Shape Keys")
 		col_shk_list = layout.column(align = 1)
@@ -378,6 +401,37 @@ class SHAPE_keys(bpy.types.Operator):
 		#wm = context.window_manager.fileselect_add(self)
 		#return {'RUNNING_MODAL'}
 		return context.window_manager.invoke_props_dialog(self)
+
+class SHAPE_keys_brows_all_vertex_groups(bpy.types.Operator):
+	bl_idname = "shape_key.brows_all_vertex_groups"
+	bl_label = "Are You Sure?"
+	
+	target = bpy.props.StringProperty()
+	
+	def execute(self, context):
+		res, message = G.face_shape_keys.create_edit_brows_vertes_groups(context, self.target)
+		if not res:
+			self.report({'WARNING'}, message)
+		else:
+			self.report({'INFO'}, message)
+		return{'FINISHED'}
+		
+	def invoke(self, context, event):
+		return context.window_manager.invoke_props_dialog(self)
+
+class SHAPE_keys_single_vertex_groups_open_panel(bpy.types.Operator):
+	bl_idname = "shape_key.single_vertex_groups_open_panel"
+	bl_label = "Recalculate Single Vertex Group"
+	
+	action = bpy.props.StringProperty()
+	
+	def execute(self, context):
+		if self.action == 'open':
+			G().rebild_targets_list(context)
+			G.recalculate_single_brows_vtx_group_panel = True
+		elif self.action == 'close':
+			G.recalculate_single_brows_vtx_group_panel = False
+		return {'FINISHED'}
 	
 class EDIT_SHAPE_keys(bpy.types.Operator):
 	bl_idname = "shape_key.edit"
@@ -677,6 +731,8 @@ def register():
 	bpy.utils.register_class(CLEAR_skin)
 	bpy.utils.register_class(LATTICE_deform)
 	bpy.utils.register_class(SHAPE_keys)
+	bpy.utils.register_class(SHAPE_keys_brows_all_vertex_groups)
+	bpy.utils.register_class(SHAPE_keys_single_vertex_groups_open_panel)
 	bpy.utils.register_class(EYE_limits)
 	bpy.utils.register_class(EDIT_SHAPE_keys)
 	bpy.utils.register_class(INSERT_inbetween)
@@ -711,7 +767,9 @@ def unregister():
 	bpy.utils.unregister_class(FACE_rig_linear_jaw_driver)
 	bpy.utils.unregister_class(CLEAR_skin)	
 	bpy.utils.unregister_class(LATTICE_deform)	
-	bpy.utils.unregister_class(SHAPE_keys)	
+	bpy.utils.unregister_class(SHAPE_keys)
+	bpy.utils.unregister_class(SHAPE_keys_brows_all_vertex_groups)
+	bpy.utils.unregister_class(SHAPE_keys_single_vertex_groups_open_panel)
 	bpy.utils.unregister_class(EYE_limits)	
 	bpy.utils.unregister_class(EDIT_SHAPE_keys)	
 	bpy.utils.unregister_class(INSERT_inbetween)	
