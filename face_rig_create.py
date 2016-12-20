@@ -129,7 +129,7 @@ class passport:
 
 class face_armature:
 	def __init__(self):
-		self.label_tmp_bones = ['vtx_lip_grp_set', 'vtx_brow_m_set', 'vtx_brow_in_set', 'vtx_brow_out_set', 'vtx_nose_set']
+		self.label_tmp_bones = ['vtx_lip_grp_set', 'vtx_brow_in_set', 'vtx_brow_out_set', 'vtx_nose_set']
 		self.label_bones = ['jaw', 'upper_jaw', 'lower_jaw', 'eye_L','eye_R','tongue_base', 'tongue_middle', 'tongue_end', 'ear_L','ear_R']
 		self.tongue_label = ['tongue_base', 'tongue_middle', 'tongue_end']
 		self.def_label = self.tongue_label + ['eye_L','eye_R', 'jaw']
@@ -2785,7 +2785,7 @@ class face_shape_keys:
 		self.out_num = 1
 		self.in_num = 1
 		
-		self.label_tmp_bones = ['vtx_lip_grp_set', 'vtx_brow_m_set', 'vtx_brow_in_set', 'vtx_brow_out_set', 'vtx_nose_set']
+		self.label_tmp_bones = ['vtx_lip_grp_set', 'vtx_brow_in_set', 'vtx_brow_out_set', 'vtx_nose_set']
 		
 		self.ather_shape_keys_data_list = [
 		('eye_r', 'pupil_extension_r', 'pupil_R', 'LOC_Y', 1, ''),
@@ -2974,6 +2974,15 @@ class face_shape_keys:
 		'brow_lower_blend',
 		'brow_lower_in_blend',
 		]
+		
+		self.brows_shape_keys_for_hand_make = {
+		'brow_raiser_in':{'source':'brow_raiser', 'logic':'in'},
+		'brow_raiser_out':{'source':'brow_raiser', 'logic':'out'},
+		'brow_lower_in':{'source':'brow_lower', 'logic':'in'},
+		'brow_lower_out':{'source':'brow_lower', 'logic':'out'},
+		}
+		
+		self.tmp_vertex_group = 'tmp'
 		
 		# -- rig data
 		try:
@@ -3745,7 +3754,7 @@ class face_shape_keys:
 		# ************** NOSE *************
 		# -- get tmp.bone position
 		try:
-			name = ('FR_' + self.label_tmp_bones[4])
+			name = ('FR_' + self.label_tmp_bones[3])
 			bone = rig_obj.data.edit_bones[name]
 		except:
 			print('****** ' + name + ' Not Found!')
@@ -4096,7 +4105,7 @@ class face_shape_keys:
 		
 		# -- get tmp brow_in position
 		try:
-			name_ = ('FR_' + self.label_tmp_bones[2])
+			name_ = ('FR_' + self.label_tmp_bones[1])
 			bone = rig_obj.data.edit_bones[name_]
 		except:
 			return(False, '****** ' + name_ + ' Not Found!')
@@ -4157,9 +4166,228 @@ class face_shape_keys:
 						brow_vtx.add([v.index], 0.0, 'REPLACE')
 		
 		return(True, 'Recalculated %s!' % target)
+	
+	def edit_brows_copy_from_central(self, context, target):
+		pass
+		### test exists
+		# -- test passoport
+		res, mesh_passport = passport().read_passport(context, 'mesh_passport')
+		if not res:
+			return(False, mesh_passport)
+		
+		# -- get mesh ob
+		try:
+			body_name = mesh_passport['body'][0]
+		except:
+			return(False, '****** the name of the "body" is not in the passport!')
+		else:
+			ob = bpy.data.objects[body_name]
+		if not ob.type == 'MESH':
+			return(False, '****** obj of Body not Mesh!')
+		
+		### make shapes
+		# -- test exists Shape Keys
+		if not ob.data.shape_keys:
+			return(False, 'Shape Keys Not Found!')
+		shape_keys = ob.data.shape_keys.key_blocks
+		
+		# -- get source
+		sourse = self.brows_shape_keys_for_hand_make[target]['source']
+		if not sourse in shape_keys:
+			return(False, 'Shape Keys "%s" Not Found!' % sourse)
+		if not target in shape_keys:
+			return(False, 'Shape Keys "%s" Not Found!' % target)
+		
+		# -- -- copy shape keys
+		for v in ob.data.vertices:
+			ob.data.shape_keys.key_blocks[target].data[v.index].co = ob.data.shape_keys.key_blocks[sourse].data[v.index].co
+		
+		return(True, 'copy shape key from: "%s" to: "%s"' % (sourse, target))
+	
+	def create_edit_brows_tmp_vertes_groups(self, context, target):
+		pass
+		# -- test passoport
+		res, mesh_passport = passport().read_passport(context, 'mesh_passport')
+		if not res:
+			return(False, mesh_passport)
+		
+		# -- get mesh ob
+		try:
+			body_name = mesh_passport['body'][0]
+		except:
+			return(False, '****** the name of the "body" is not in the passport!')
+		else:
+			ob = bpy.data.objects[body_name]
+		if not ob.type == 'MESH':
+			return(False, '****** obj of Body not Mesh!')
+		
+		# -- rig to EDIT mode
+		rig_obj = bpy.data.objects[G.rig_name]
+		scene = bpy.context.scene
+		scene.objects.active = rig_obj
+		bpy.ops.object.mode_set(mode = 'EDIT')
+		
+		# -- get tmp.bone position
+		try:
+			name_ = ('FR_' + self.label_tmp_bones[0])
+			bone = rig_obj.data.edit_bones[name_]
+		except:
+			return(False, '****** %s Not Found!' % name_)
+		head = (bone.head[0],bone.head[1],bone.head[2])
+		
+		# -- get tmp brow_IN position
+		try:
+			name_ = ('FR_' + self.label_tmp_bones[1])
+			bone = rig_obj.data.edit_bones[name_]
+		except:
+			return(False, '****** ' + name_ + ' Not Found!')
+		tail_in = (bone.tail[0], bone.tail[1], bone.tail[2])
+		
+		# -- get tmp brow_OUT position
+		try:
+			name_ = ('FR_' + self.label_tmp_bones[2])
+			bone = rig_obj.data.edit_bones[name_]
+		except:
+			return(False, '****** ' + name_ + ' Not Found!')
+		tail_out = (bone.tail[0], bone.tail[1], bone.tail[2])
+		
+		
+		# -- get vertex group
+		if self.tmp_vertex_group in ob.vertex_groups:
+			tmp_vtx = ob.vertex_groups[self.tmp_vertex_group]
+		else:
+			tmp_vtx = ob.vertex_groups.new(self.tmp_vertex_group)
 			
+		for v in ob.data.vertices:
+			if v.co[2] >= head[2]:
+				weight = 1
+				tmp_vtx.add([v.index], weight, 'REPLACE')
+				# Rigt Part
+				a = tail_out[0]
+				b = tail_in[0]
+				c = -tail_in[0]
+				d = -tail_out[0]
+				
+				x = v.co[0]
+				if self.brows_shape_keys_for_hand_make[target]['logic'] == 'in':
+					if x<a:
+						weight = 0
+					elif x>a and x<b:
+						weight = (math.cos(math.pi*((x-a)/(b-a)) - math.pi) +1)/2
+					elif x>b and x<c:
+						weight = 1
+					elif x>c and x<d:
+						weight = (math.cos(math.pi*((x-d)/(c-d)) - math.pi) +1)/2
+					if x>d:
+						weight = 0
+				elif self.brows_shape_keys_for_hand_make[target]['logic'] == 'out':
+					if x<a:
+						weight = 1
+					elif x>a and x<b:
+						weight = (math.cos(math.pi*((x-b)/(a-b)) - math.pi) +1)/2
+					elif x>b and x<c:
+						weight = 0
+					elif x>c and x<d:
+						weight = (math.cos(math.pi*((x-c)/(d-c)) - math.pi) +1)/2
+					if x>d:
+						weight = 1
+				tmp_vtx.add([v.index], weight, 'REPLACE')
+			else:
+				tmp_vtx.add([v.index], 0.0, 'REPLACE')
+		
+		# tmp vertex group to target
+		# -- test exists Shape Keys
+		if not ob.data.shape_keys:
+			return(False, 'Shape Keys Not Found!')
+		shape_keys = ob.data.shape_keys.key_blocks
+		# -- test exists Target
+		if not target in shape_keys:
+			return(False, 'Shape Keys "%s" Not Found!' % target)
+		# -- append tmp_vertex_group to target
+		shape_keys[target].vertex_group = self.tmp_vertex_group
+		
+		# -- make active target
+		for i,key in enumerate(shape_keys.keys()):
+			if key == target:
+				scene = bpy.context.scene
+				scene.objects.active = ob
+				ob.active_shape_key_index = i
+				break
+		#****
+		return(True, 'Calculated Vertex Group For: %s' % target)
+	
+	def bake_brows_shape_key(self, context, target):
+		pass
+		# -- test passoport
+		res, mesh_passport = passport().read_passport(context, 'mesh_passport')
+		if not res:
+			return(False, mesh_passport)
+		
+		# -- get mesh ob
+		try:
+			body_name = mesh_passport['body'][0]
+		except:
+			return(False, '****** the name of the "body" is not in the passport!')
+		else:
+			ob = bpy.data.objects[body_name]
+		if not ob.type == 'MESH':
+			return(False, '****** obj of Body not Mesh!')
+		
+		# bake
+		res, mess = self.bake_shape_keys(context, ob, [target])
+		if not res:
+			return(False, mess)
+		
+		return(True, 'Baked Shape Key: %s' % target)
+	
+	def bake_shape_keys(self, context, ob, shape_key_list): #1)bake from exist vertex_group, 2)set the head_blend.m vertex_group
+		pass
+		# -- rig to EDIT mode
+		rig_obj = bpy.data.objects[G.rig_name]
+		scene = bpy.context.scene
+		scene.objects.active = rig_obj
+		bpy.ops.object.mode_set(mode = 'EDIT')
+		
+		# -- test exists Shape Keys
+		if not ob.data.shape_keys:
+			return(False, 'Shape Keys Not Found!')
+		shape_keys = ob.data.shape_keys.key_blocks
+		
+		# -- get tmp.bone position
+		try:
+			name_ = ('FR_' + self.label_tmp_bones[0])
+			bone = rig_obj.data.edit_bones[name_]
+		except:
+			return(False, '****** %s Not Found!' % name_)
+		head = (bone.head[0],bone.head[1],bone.head[2])
+		
+		# bake
+		print('*'*100)
+		for target_name in shape_key_list:
+			# -- test exists Target
+			if not target_name in shape_keys:
+				print('"%s" Not Found!' % target_name)
+				continue
+			target = shape_keys[target_name]
+			basis = shape_keys['Basis']
+			# -- get vertex group
+			vertex_group = shape_keys[target_name].vertex_group
+			vtx_group = ob.vertex_groups[vertex_group]
+			# -- bake
+			for v in ob.data.vertices:
+				if v.co[2] >= head[2]:
+					basis_v = basis.data[v.index].co
+					target_v = target.data[v.index].co
+					target.data[v.index].co[0] = basis_v[0] + (target_v[0] - basis_v[0])*vtx_group.weight(v.index)
+					target.data[v.index].co[1] = basis_v[1] + (target_v[1] - basis_v[1])*vtx_group.weight(v.index)
+					target.data[v.index].co[2] = basis_v[2] + (target_v[2] - basis_v[2])*vtx_group.weight(v.index)
+			print('"%s" Bake!' % target_name)
+			target.vertex_group = 'head_blend.m'
+			
+		return(True, 'ok!')
 		
 	def autolids_base(self, context):
+		pass
 		# ******************** test passoport *****************************
 		mesh_passport = passport().read_passport(context, 'mesh_passport')
 		if mesh_passport[0]:
@@ -4376,6 +4604,7 @@ class face_shape_keys:
 		return(True, 'All Right!')
 	
 	def insert_in_between(self, context, shape_key, num):
+		pass
 		#passport().string_add_to_passport(bpy.context, 'list_of_inbetweens', shape_key)
 		list_of_inbetweens = passport().read_passport(context, 'list_of_inbetweens')
 		if list_of_inbetweens[0]:
@@ -4869,6 +5098,7 @@ class face_shape_keys:
 		return(True, 'All Right!')
 	
 	def edit_shape_keys(self, context, target):
+		pass
 		# ******************** test passoport *****************************
 		mesh_passport = passport().read_passport(context, 'mesh_passport')
 		if mesh_passport[0]:
@@ -4942,6 +5172,7 @@ class face_shape_keys:
 				return(os.path.normpath(os.path.join(os.path.expanduser('~'), '.all_vertex_groups_data.json')))
 	
 	def export_single_vertex_data(self, context):
+		pass
 		# get select mesh
 		ob = bpy.context.object
 		if not ob.type == 'MESH':
@@ -4965,6 +5196,7 @@ class face_shape_keys:
 		return(True, ('vertex data saved! to: ' + path))
 		
 	def export_all_shape_key_data(self, context):
+		pass
 		#### get 'body' obj from mesh_passport
 		ob = None
 		mesh_passport = passport().read_passport(context, 'mesh_passport')
@@ -5010,6 +5242,7 @@ class face_shape_keys:
 		return(True, ('vertex data saved to: ' + path))
 		
 	def export_all_vertex_groups(self, context):
+		pass
 		#### get 'body' obj from mesh_passport
 		ob = None
 		mesh_passport = passport().read_passport(context, 'mesh_passport')
@@ -5055,6 +5288,7 @@ class face_shape_keys:
 		return(True, ('weight data saved to: ' + path))
 		
 	def import_single_vertex_data(self, context, target):
+		pass
 		#### get 'body' obj from mesh_passport
 		ob = None
 		mesh_passport = passport().read_passport(context, 'mesh_passport')
@@ -5110,6 +5344,7 @@ class face_shape_keys:
 		return(True, 'vertex data imported!')
 		
 	def import_all_shape_key_data(self, context):
+		pass
 		#### get 'body' obj from mesh_passport
 		ob = None
 		mesh_passport = passport().read_passport(context, 'mesh_passport')
@@ -5159,6 +5394,7 @@ class face_shape_keys:
 		return(True, 'vertex data imported!')
 		
 	def import_single_sk_from_all(self, context, target):
+		pass
 		#### get 'body' obj from mesh_passport
 		ob = None
 		mesh_passport = passport().read_passport(context, 'mesh_passport')
@@ -5206,6 +5442,7 @@ class face_shape_keys:
 		return(True, 'single vertex data imported!')
 		
 	def import_all_vertex_groups(self, context):
+		pass
 		#### get 'body' obj from mesh_passport
 		ob = None
 		mesh_passport = passport().read_passport(context, 'mesh_passport')

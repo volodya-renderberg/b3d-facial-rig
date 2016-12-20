@@ -12,9 +12,11 @@ class G(object):
 	import_single_panel = False
 	import_single_from_all_panel = False
 	recalculate_single_brows_vtx_group_panel = False
+	edit_brows_shape_keys_panel = False
 	
 	targets_list = [('None',)*3]
 	brows_vtx_list = [('None',)*3]
+	brows_shape_keys_for_hand_make_list = [('None',)*3]
 	
 	face_armature = face_armature()
 	face_shape_keys = face_shape_keys()
@@ -30,12 +32,17 @@ class G(object):
 		for key in G.face_shape_keys.brows_vertex_groups:
 			G.brows_vtx_list.append((key,)*3)
 		###
+		G.brows_shape_keys_for_hand_make_list = []
+		for key in G.face_shape_keys.brows_shape_keys_for_hand_make:
+			G.brows_shape_keys_for_hand_make_list.append((key,)*3)
+		###
 		set_targets_list()
 
 def set_targets_list():
 	bpy.types.Scene.my_num_of_between = bpy.props.IntProperty(name = 'Num of Between:', min = 1, default = 1)
-	bpy.types.Scene.my_targets_list_enum = bpy.props.EnumProperty(items = G.targets_list, name = 'Targets:', update = None)
+	bpy.types.Scene.my_targets_list_enum = bpy.props.EnumProperty(items = G.targets_list, name = 'Targets', update = None)
 	bpy.types.Scene.brows_vtx_list = bpy.props.EnumProperty(items = G.brows_vtx_list, name = 'Vertex_Groups:', update = None)
+	bpy.types.Scene.brows_shape_keys_for_hand_make_list_enum = bpy.props.EnumProperty(items = G.brows_shape_keys_for_hand_make_list, name = 'Targets', update = None)
 
 class get_data_class():
 	def __init__(self):
@@ -152,17 +159,22 @@ class FACIALRIG_ShapeKeys(bpy.types.Panel):
 		layout = self.layout
 		
 		layout.label("Create:")
-		col_shk = layout.column(align=1)
-		col_shk.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Shape Keys').action = 'create_shape_keys'
-		col_shk.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Autolid').action = 'create_autolid'
-		col_shk.operator("insert.inbetween", icon='SHAPEKEY_DATA', text = 'Add Inbetween')
-		
-		layout.label("Edit Shape Keys of Brows:")
 		col = layout.column(align=1)
+		col.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Shape Keys').action = 'create_shape_keys'
+		col.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Autolid').action = 'create_autolid'
+		col.operator("insert.inbetween", icon='SHAPEKEY_DATA', text = 'Add Inbetween')
 		
 		layout.label("Edit Shape Keys:")
-		col_eshk = layout.column(align=1)
-		col_eshk.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Central To Side').action = 'central_to_side'
+		col = layout.column(align=1)
+		col.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Central To Side').action = 'central_to_side'
+		col.operator('shape_key.edit_brows_shape_keys_open_panel', icon='SHAPEKEY_DATA', text = 'Edit Brows Shape Keys').action = 'open'
+		
+		if G.edit_brows_shape_keys_panel:
+			col.prop(context.scene, "brows_shape_keys_for_hand_make_list_enum")
+			col.operator('shape_key.brows_edit_shape_keys').action = 'copy_from_central'
+			col.operator('shape_key.brows_edit_shape_keys', text = 'to Calculate TMP Vertex Group').action = 'vertex_group'
+			col.operator('shape_key.brows_edit_shape_keys', text = 'Bake Shape Key').action = 'bake'
+			col.operator('shape_key.edit_brows_shape_keys_open_panel', text = 'close').action = 'close'
 				
 		layout.label("Recalculate Vertex Groups:")
 		col = layout.column(align=1)
@@ -443,6 +455,49 @@ class SHAPE_keys_single_vertex_groups_open_panel(bpy.types.Operator):
 			G.recalculate_single_brows_vtx_group_panel = True
 		elif self.action == 'close':
 			G.recalculate_single_brows_vtx_group_panel = False
+		return {'FINISHED'}
+	
+class SHAPE_keys_edit_brows_shape_keys_open_panel(bpy.types.Operator):
+	bl_idname = "shape_key.edit_brows_shape_keys_open_panel"
+	bl_label = "Edit Brows Shape Keys Open Panel"
+	
+	action = bpy.props.StringProperty()
+	
+	def execute(self, context):
+		if self.action == 'open':
+			G().rebild_targets_list(context)
+			G.edit_brows_shape_keys_panel = True
+		elif self.action == 'close':
+			G.edit_brows_shape_keys_panel = False
+		return {'FINISHED'}
+	
+class SHAPE_keys_brows_edit_shape_keys(bpy.types.Operator):
+	bl_idname = "shape_key.brows_edit_shape_keys"
+	bl_label = "Copy From Central Shape Key"
+	
+	action = bpy.props.StringProperty()
+	
+	def execute(self, context):
+		target = context.scene.brows_shape_keys_for_hand_make_list_enum
+		if self.action == 'copy_from_central':
+			res, mess = G.face_shape_keys.edit_brows_copy_from_central(context, target)
+			if res:
+				self.report({'INFO'}, mess)
+			else:
+				self.report({'WARNING'}, mess)
+		elif self.action == 'vertex_group':
+			res, mess = G.face_shape_keys.create_edit_brows_tmp_vertes_groups(context, target)
+			if res:
+				self.report({'INFO'}, mess)
+			else:
+				self.report({'WARNING'}, mess)
+		elif self.action == 'bake':
+			res, mess = G.face_shape_keys.bake_brows_shape_key(context, target)
+			if res:
+				self.report({'INFO'}, mess)
+			else:
+				self.report({'WARNING'}, mess)
+			pass
 		return {'FINISHED'}
 	
 class EDIT_SHAPE_keys(bpy.types.Operator):
@@ -746,6 +801,8 @@ def register():
 	bpy.utils.register_class(SHAPE_keys)
 	bpy.utils.register_class(SHAPE_keys_brows_all_vertex_groups)
 	bpy.utils.register_class(SHAPE_keys_single_vertex_groups_open_panel)
+	bpy.utils.register_class(SHAPE_keys_edit_brows_shape_keys_open_panel)
+	bpy.utils.register_class(SHAPE_keys_brows_edit_shape_keys)
 	bpy.utils.register_class(EYE_limits)
 	bpy.utils.register_class(EDIT_SHAPE_keys)
 	bpy.utils.register_class(INSERT_inbetween)
@@ -784,6 +841,8 @@ def unregister():
 	bpy.utils.unregister_class(SHAPE_keys)
 	bpy.utils.unregister_class(SHAPE_keys_brows_all_vertex_groups)
 	bpy.utils.unregister_class(SHAPE_keys_single_vertex_groups_open_panel)
+	bpy.utils.unregister_class(SHAPE_keys_edit_brows_shape_keys_open_panel)
+	bpy.utils.unregister_class(SHAPE_keys_brows_edit_shape_keys)
 	bpy.utils.unregister_class(EYE_limits)	
 	bpy.utils.unregister_class(EDIT_SHAPE_keys)	
 	bpy.utils.unregister_class(INSERT_inbetween)	

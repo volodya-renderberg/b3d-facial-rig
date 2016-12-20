@@ -33,7 +33,7 @@ class TMP_create:
 		('FRTMP_lower_jaw', (0.00, -0.05, 1.17), (0.00, -0.13, 1.12), 'FRTMP_root'),
 		# vtx tmp bones
 		('FRTMP_vtx_lip_grp_set', (0.0000, self.y/2, 1.00), (-0.0800, self.y/2, 1.10), 'FRTMP_root'),
-		('FRTMP_vtx_brow_m_set', (-0.057, self.y/2, 1.283), (-0.075, self.y/2, 1.359), 'FRTMP_root'),
+		#('FRTMP_vtx_brow_m_set', (-0.057, self.y/2, 1.283), (-0.075, self.y/2, 1.359), 'FRTMP_root'),
 		('FRTMP_vtx_brow_in_set', (-0.057, self.y/2, 1.283), (-0.04, self.y/2, 1.356), 'FRTMP_root'),
 		('FRTMP_vtx_brow_out_set', (-0.057, self.y/2, 1.283), (-0.109, self.y/2, 1.342), 'FRTMP_root'),
 		('FRTMP_vtx_nose_set', (0.0, self.y/2, 1.145), (-0.043, self.y/2, 1.191), 'FRTMP_root'),
