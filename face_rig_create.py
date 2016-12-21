@@ -2787,6 +2787,8 @@ class face_shape_keys:
 		
 		self.label_tmp_bones = ['vtx_lip_grp_set', 'vtx_brow_in_set', 'vtx_brow_out_set', 'vtx_nose_set']
 		
+		self.central_sh_keys = ['jaw_open_C', 'jaw_side_R', 'lip_side.r', 'jaw_fwd', 'jaw_back', 'lip_down', 'lip_raise', 'lip_funnel', 'lip_close']
+		
 		self.ather_shape_keys_data_list = [
 		('eye_r', 'pupil_extension_r', 'pupil_R', 'LOC_Y', 1, ''),
 		('eye_r', 'pupil_pinch_r', 'pupil_R', 'LOC_Y', -1, ''),
@@ -2882,10 +2884,10 @@ class face_shape_keys:
 		('brow_raiser_out', '', '', '', 'head_blend.m'),
 		('brow_raiser_in', '', '', '', 'head_blend.m'),
 		('brow_raiser_out.r', 'brow_out_R', 'LOC_Y', 1, 'brow_out_blend.r', 'brow_mid_R', 'LOC_Y', 1, 'off'),# 'brow_mid_R', 'LOC_Y', 1
-		('brow_raiser_mid.r', 'brow_mid_R', 'LOC_Y', 1, 'brow_raiser_blend.r'),
+		('brow_raiser.r', 'brow_mid_R', 'LOC_Y', 1, 'brow_raiser_blend.r'),
 		('brow_raiser_in.r', 'brow_in_R', 'LOC_Y', 1, 'brow_raiser_in_blend.r', 'brow_mid_R', 'LOC_Y', 1, 'off'),# 'brow_mid_R', 'LOC_Y', 1
 		('brow_raiser_out.l', 'brow_out_L', 'LOC_Y', 1, 'brow_out_blend.l', 'brow_mid_L', 'LOC_Y', 1, 'off'), # 'brow_mid_L', 'LOC_Y', 1
-		('brow_raiser_mid.l', 'brow_mid_L', 'LOC_Y', 1, 'brow_raiser_blend.l'),
+		('brow_raiser.l', 'brow_mid_L', 'LOC_Y', 1, 'brow_raiser_blend.l'),
 		('brow_raiser_in.l', 'brow_in_L', 'LOC_Y', 1, 'brow_raiser_in_blend.l', 'brow_mid_L', 'LOC_Y', 1, 'off'),# 'brow_mid_L', 'LOC_Y', 1
 		('brow_gatherer', '', '', '', 'head_blend.m'),
 		('brow_gatherer.r', 'brow_gather_R', 'LOC_Y', 1, 'brow_gatherer_blend.r'),
@@ -2894,10 +2896,10 @@ class face_shape_keys:
 		('brow_lower_out', '', '', '', 'head_blend.m'),
 		('brow_lower_in', '', '', '', 'head_blend.m'),
 		('brow_lower_out.r', 'brow_out_R', 'LOC_Y', -1, 'brow_out_blend.r'),
-		('brow_lower_mid.r', 'brow_mid_R', 'LOC_Y', -1, 'brow_lower_blend.r'),
+		('brow_lower.r', 'brow_mid_R', 'LOC_Y', -1, 'brow_lower_blend.r'),
 		('brow_lower_in.r', 'brow_in_R', 'LOC_Y', -1, 'brow_lower_in_blend.r', 'brow_mid_R', 'LOC_Y', -1, 'off'),# 'brow_mid_R', 'LOC_Y', -1
 		('brow_lower_out.l', 'brow_out_L', 'LOC_Y', -1, 'brow_out_blend.l'),
-		('brow_lower_mid.l', 'brow_mid_L', 'LOC_Y', -1, 'brow_lower_blend.l'),
+		('brow_lower.l', 'brow_mid_L', 'LOC_Y', -1, 'brow_lower_blend.l'),
 		('brow_lower_in.l', 'brow_in_L', 'LOC_Y',  -1, 'brow_lower_in_blend.l', 'brow_mid_L', 'LOC_Y', -1, 'off'),# 'brow_mid_L', 'LOC_Y', -1
 		#BLINK
 		('blink_up_lid',  '',  '',  '',  'head_blend.m'),
@@ -2935,10 +2937,10 @@ class face_shape_keys:
 		'cheek_suck':('cheek_suck.r', 'cheek_suck.l'),
 		'cheek_sqz':('cheek_sqz.r', 'cheek_sqz.l'),
 		'cheek_raise':('cheek_raise.r', 'cheek_raise.l'),
-		'brow_raiser':('brow_raiser_mid.r', 'brow_raiser_mid.l'),
+		'brow_raiser':('brow_raiser.r', 'brow_raiser.l'),
 		'brow_raiser_out':('brow_raiser_out.r', 'brow_raiser_out.l'),
 		'brow_raiser_in':('brow_raiser_in.r', 'brow_raiser_in.l'),
-		'brow_lower':('brow_lower_mid.r', 'brow_lower_mid.l'),
+		'brow_lower':('brow_lower.r', 'brow_lower.l'),
 		'brow_lower_out':('brow_lower_out.r', 'brow_lower_out.l'),
 		'brow_lower_in':('brow_lower_in.r', 'brow_lower_in.l'),
 		'autolid_low':('autolid_low.r', 'autolid_low.l'),
@@ -3194,15 +3196,17 @@ class face_shape_keys:
 		# -- JAW.OPEN.DRIVER
 		f_curve = ob.data.shape_keys.key_blocks['jaw_open_C'].driver_add('value')
 		drv = f_curve.driver
-		drv.type = 'AVERAGE'
+		#drv.type = 'AVERAGE'
+		drv.type = 'SCRIPTED'
+		drv.expression = 'abs(var) if var<0 else 0.0'
 		drv.show_debug_info = True
-
+		'''
 		#point = f_curve.keyframe_points.insert(-0.5,0)
 		point = f_curve.keyframe_points.insert(0,0)
 		point.interpolation = 'LINEAR'
 		point = f_curve.keyframe_points.insert(-1,1)
 		point.interpolation = 'LINEAR'
-
+		'''
 		var = drv.variables.new()
 		var.name = 'var'
 		var.type = 'TRANSFORMS'
@@ -3380,7 +3384,6 @@ class face_shape_keys:
 				
 			else:
 				# correct construction
-				# old construction
 				f_curve = ob.data.shape_keys.key_blocks[sh_key_name].driver_add('value')
 				drv = f_curve.driver
 				drv.type = 'SCRIPTED'
@@ -4967,7 +4970,127 @@ class face_shape_keys:
 		text.write(json.dumps(data, sort_keys=True, indent=4))
 		
 		return(True, 'All Right!')
+	
+	def insert_inbetween(self, context, target, weight, weight_exists): # NEW
+		pass
+		#test weight
+		weight = round(weight, 2)
+		if weight == 0.0 or weight == 1.0:
+			return(False, '[0,1] invalid values!')
+		if weight in weight_exists:
+			return(False, 'This weight "%s" already exists!' % weight)
+		#get data
+		#get Arm
+		ob_arm = bpy.context.object
+		if not ob_arm.type == 'ARMATURE':
+			return(False, 'Please select Armature')
+		arm = bpy.data.armatures['rig'] # from active obj
+		head_bone = ob_arm.pose.bones['DEF-head'] # from name
 		
+		#get ob
+		# -- test passoport
+		res, mesh_passport = passport().read_passport(context, 'mesh_passport')
+		if not res:
+			return(False, mesh_passport)
+		# -- get mesh ob
+		try:
+			body_name = mesh_passport['body'][0]
+		except:
+			return(False, '****** the name of the "body" is not in the passport!')
+		else:
+			ob = bpy.data.objects[body_name]
+		if not ob.type == 'MESH':
+			return(False, '****** obj of Body not Mesh!')
+		
+		
+		#add properties
+		if not target in head_bone:
+			bpy.types.ArmatureBones.driver = bpy.props.FloatProperty(name = target, default = 1.0, min = 0.0, max = 1.0)
+		head_bone[target] = 0.00
+		
+		if not ob_arm.animation_data.drivers.find('pose.bones["DEF-head"]["%s"]' % target):
+			#read drivers
+			data_path = 'key_blocks["%s"].value' % target
+			fcurve = ob.data.shape_keys.animation_data.drivers.find(data_path)
+			driver = fcurve.driver
+			
+			#driver to properties
+			f_curve = head_bone.driver_add('["%s"]' % target)
+			f_curve.driver.type = driver.type
+			f_curve.driver.expression = driver.expression
+			
+			for var in driver.variables:
+				new_var = f_curve.driver.variables.new()
+				new_var.name = var.name
+				new_var.type = var.type
+				new_targ = new_var.targets[0]
+				targ = var.targets[0]
+				if var.type == 'TRANSFORMS':
+					new_targ.id = targ.id
+					print(new_targ.id.type)
+					if targ.id.type == 'ARMATURE':
+						new_targ.bone_target = targ.bone_target
+					new_targ.transform_type = targ.transform_type
+					new_targ.transform_space = targ.transform_space
+				elif var.type == 'SINGLE_PROP':
+					new_targ.id = targ.id
+					new_targ.data_path = targ.data_path
+			
+			#remove driver from mesh
+			ob.data.shape_keys.key_blocks[target].driver_remove('value')
+		
+			#add driver to mesh
+			FC = ob.data.shape_keys.key_blocks[target].driver_add('value')
+			drv = FC.driver
+			drv.type = 'SCRIPTED'
+			drv.expression = 'input'
+			drv.show_debug_info = True
+			
+			var = drv.variables.new()
+			var.name = 'input'
+			var.type = 'SINGLE_PROP'
+			
+			targ = var.targets[0]
+			targ.id = ob_arm
+			targ.data_path = 'pose.bones["DEF-head"]["%s"]' % target
+		else:
+			print('Driver Already Exists!')
+			
+		return(True, 'Ok!')
+		
+	def get_inbetween_exists(self, context, target):
+		pass
+		#get ob
+		# -- test passoport
+		res, mesh_passport = passport().read_passport(context, 'mesh_passport')
+		if not res:
+			return(False, mesh_passport)
+		# -- get mesh ob
+		try:
+			body_name = mesh_passport['body'][0]
+		except:
+			return(False, '****** the name of the "body" is not in the passport!')
+		else:
+			ob = bpy.data.objects[body_name]
+		if not ob.type == 'MESH':
+			return(False, '****** obj of Body not Mesh!')
+		
+		#get shape_keys list
+		exists_list = []
+		shape_keys = []
+		for key in ob.data.shape_keys.key_blocks:
+			if target in key.name.split('.'):
+				shape_keys.append(key.name)
+				parts = key.name.split('.')
+				try:
+					num = float('0.%s' % parts[len(parts)-1])
+					exists_list.append(num)
+				except:
+					continue
+		
+		return(True, list(set(exists_list)))
+		
+	
 	def copy_central_to_side_shape_keys(self, context):
 		print('********** central to side *****************')
 		# ******************** test passoport *****************************

@@ -13,6 +13,9 @@ class G(object):
 	import_single_from_all_panel = False
 	recalculate_single_brows_vtx_group_panel = False
 	edit_brows_shape_keys_panel = False
+	insert_inbetween_panel = False
+	insert_inbetween_target = ''
+	insert_inbetween_exists = []
 	
 	targets_list = [('None',)*3]
 	brows_vtx_list = [('None',)*3]
@@ -44,14 +47,18 @@ def set_targets_list():
 	bpy.types.Scene.brows_vtx_list = bpy.props.EnumProperty(items = G.brows_vtx_list, name = 'Vertex_Groups:', update = None)
 	bpy.types.Scene.brows_shape_keys_for_hand_make_list_enum = bpy.props.EnumProperty(items = G.brows_shape_keys_for_hand_make_list, name = 'Targets', update = None)
 
+def set_props():
+	bpy.types.WindowManager.weight_inbetween = bpy.props.FloatProperty(name="weight_inbetween", min = 0.0, max = 1.0, default=0.5, update = None)
+
 class get_data_class():
 	def __init__(self):
 		self.data = []
 			
 	def get_list_shape_keys(self, context,  only_origin = 1):
-		central_sh_keys = ['jaw_open_C', 'jaw_side_R', 'lip_side.r', 'jaw_fwd', 'jaw_back', 'lip_down', 'lip_raise', 'lip_funnel', 'lip_close']
-		#print('\n'*3, face_shape_keys().central_side_shape_keys)
 		fshk = face_shape_keys()
+		#central_sh_keys = ['jaw_open_C', 'jaw_side_R', 'lip_side.r', 'jaw_fwd', 'jaw_back', 'lip_down', 'lip_raise', 'lip_funnel', 'lip_close']
+		central_sh_keys = fshk.central_sh_keys
+		#print('\n'*3, face_shape_keys().central_side_shape_keys)
 		try:
 			keys = fshk.central_side_shape_keys.keys()
 			list_sh_keys = list(keys)
@@ -163,11 +170,25 @@ class FACIALRIG_ShapeKeys(bpy.types.Panel):
 		col.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Shape Keys').action = 'create_shape_keys'
 		col.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Autolid').action = 'create_autolid'
 		col.operator("insert.inbetween", icon='SHAPEKEY_DATA', text = 'Add Inbetween')
+		col.operator("shape_key.insert_inbetween_panel", icon='SHAPEKEY_DATA', text = 'Insert Inbetween:')
+		if G.insert_inbetween_panel:
+			#target
+			col.label('Target: %s' % G.insert_inbetween_target)
+			#weight
+			wm = context.window_manager
+			col.prop(wm, 'weight_inbetween')
+			#exists
+			col.label('Exists Inbetweens:')
+			for weight in G.insert_inbetween_exists:
+				col.label(str(weight))
+			row = col.row(align = True)
+			row.operator('shape_key.insert_inbetween', text = 'Insert')
+			row.operator('shape_key.insert_inbetween_close_panel', text = 'close')
 		
 		layout.label("Edit Shape Keys:")
 		col = layout.column(align=1)
 		col.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Central To Side').action = 'central_to_side'
-		col.operator('shape_key.edit_brows_shape_keys_open_panel', icon='SHAPEKEY_DATA', text = 'Edit Brows Shape Keys').action = 'open'
+		col.operator('shape_key.edit_brows_shape_keys_open_panel', icon='SHAPEKEY_DATA', text = 'Edit Brows Shape Keys:').action = 'open'
 		
 		if G.edit_brows_shape_keys_panel:
 			col.prop(context.scene, "brows_shape_keys_for_hand_make_list_enum")
@@ -180,7 +201,7 @@ class FACIALRIG_ShapeKeys(bpy.types.Panel):
 		col = layout.column(align=1)
 		col.operator("shape_key.generate", icon='GROUP_VERTEX', text = '(Lower, Middle) Recalculation All').action = 'recalculation'
 		col.operator("shape_key.brows_all_vertex_groups", icon='GROUP_VERTEX', text = '(Brows) Recalculation All').target = 'all'
-		col.operator('shape_key.single_vertex_groups_open_panel', icon='GROUP_VERTEX', text = '(Brows) Recalculation Single').action = 'open'
+		col.operator('shape_key.single_vertex_groups_open_panel', icon='GROUP_VERTEX', text = '(Brows) Recalculation Single:').action = 'open'
 		
 		if G.recalculate_single_brows_vtx_group_panel:
 			for name in G.face_shape_keys.brows_vertex_groups:
@@ -572,6 +593,77 @@ class INSERT_inbetween(bpy.types.Operator):
 		wm = context.window_manager
 		return wm.invoke_props_dialog(self)
 	
+class SHAPE_keys_insert_inbetween_panel(bpy.types.Operator):
+	bl_idname = "shape_key.insert_inbetween_panel"
+	bl_label = "Insert Inbetween"
+	
+	##### get list shape keys
+	fshk = face_shape_keys()
+	central_sh_keys = fshk.central_sh_keys#['jaw_open_C', 'jaw_fwd', 'jaw_back', 'lip_down', 'lip_raise', 'lip_funnel', 'lip_close']
+	list_sh_keys = []
+	try:
+		keys = fshk.central_side_shape_keys.keys()
+		list_sh_keys = list(keys)
+		list_sh_keys = list_sh_keys + central_sh_keys
+		# finish
+		list_sh_keys.sort()
+	except:
+		pass
+	#####
+	target_list = []
+	for key in list_sh_keys:
+		target_list.append((key, key, key))
+	
+	target = bpy.props.EnumProperty(name="Shape Key", items = target_list)
+	#num = bpy.props.IntProperty(name="Num Inbetween Keys")
+	
+	def execute(self, context):
+		#print(self.num, self.target)
+		#result = face_shape_keys().insert_in_between(context, self.target, (self.num + 1))
+		#if not result[0]:
+		#	self.report({'WARNING'}, result[1])
+		G.insert_inbetween_panel = True
+		G.insert_inbetween_target = self.target
+		#get exists list
+		res, mess = G.face_shape_keys.get_inbetween_exists(context, self.target)
+		if not res:
+			self.report({'WARNING'}, mess)
+		else:
+			G.insert_inbetween_exists = mess
+		return {'FINISHED'}
+
+	def invoke(self, context, event):
+		self.num = 1
+		wm = context.window_manager
+		return wm.invoke_props_dialog(self)
+	
+class SHAPE_keys_insert_inbetween(bpy.types.Operator):
+	bl_idname = "shape_key.insert_inbetween"
+	bl_label = "You Are Sure?"
+	
+	def execute(self, context):
+		weight = context.window_manager.weight_inbetween
+		weight_exists = G.insert_inbetween_exists
+		target = G.insert_inbetween_target
+		
+		res, mess = G.face_shape_keys.insert_inbetween(context, target, weight, weight_exists)
+		if not res:
+			self.report({'WARNING'}, mess)
+		else:
+			self.report({'INFO'}, mess)
+		return {'FINISHED'}
+	
+	def invoke(self, context, event):
+		return context.window_manager.invoke_props_dialog(self)
+
+class SHAPE_keys_insert_inbetween_close_panel(bpy.types.Operator):
+	bl_idname = "shape_key.insert_inbetween_close_panel"
+	bl_label = "close"
+	
+	def execute(self, context):
+		G.insert_inbetween_panel = False
+		return {'FINISHED'}
+	
 class EDIT_lattice(bpy.types.Operator):
 	bl_idname = "edit.lattice"
 	bl_label = "Edit Lattice"
@@ -806,6 +898,9 @@ def register():
 	bpy.utils.register_class(EYE_limits)
 	bpy.utils.register_class(EDIT_SHAPE_keys)
 	bpy.utils.register_class(INSERT_inbetween)
+	bpy.utils.register_class(SHAPE_keys_insert_inbetween_panel)
+	bpy.utils.register_class(SHAPE_keys_insert_inbetween)
+	bpy.utils.register_class(SHAPE_keys_insert_inbetween_close_panel)
 	bpy.utils.register_class(EDIT_lattice)
 	bpy.utils.register_class(REBILD_tmp_armature)
 	bpy.utils.register_class(WEIGHT_paint)
@@ -825,6 +920,7 @@ def register():
 	
 	###
 	set_targets_list()
+	set_props()
 	
 def unregister():
 	bpy.utils.unregister_class(FACIALRIG_Help)
@@ -845,7 +941,10 @@ def unregister():
 	bpy.utils.unregister_class(SHAPE_keys_brows_edit_shape_keys)
 	bpy.utils.unregister_class(EYE_limits)	
 	bpy.utils.unregister_class(EDIT_SHAPE_keys)	
-	bpy.utils.unregister_class(INSERT_inbetween)	
+	bpy.utils.unregister_class(INSERT_inbetween)
+	bpy.utils.unregister_class(SHAPE_keys_insert_inbetween_panel)
+	bpy.utils.unregister_class(SHAPE_keys_insert_inbetween)
+	bpy.utils.unregister_class(SHAPE_keys_insert_inbetween_close_panel)
 	bpy.utils.unregister_class(EDIT_lattice)	
 	bpy.utils.unregister_class(REBILD_tmp_armature)	
 	bpy.utils.unregister_class(WEIGHT_paint)	
