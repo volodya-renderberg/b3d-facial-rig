@@ -3226,7 +3226,7 @@ class face_shape_keys:
 		drv = f_curve.driver
 		drv.type = 'SCRIPTED'
 		drv.show_debug_info = True
-		drv.expression = '(0  - var_side) * (1 + var_open)'
+		drv.expression = '(0  - var_side) * (1 + var_open) if var_side < 0.0 else 0.0'
 
 		var = drv.variables.new()
 		var.name = 'var_side'
@@ -3253,7 +3253,7 @@ class face_shape_keys:
 		drv = f_curve.driver
 		drv.type = 'SCRIPTED'
 		drv.show_debug_info = True
-		drv.expression = '(0 - var_side) * (0 - var_open)'
+		drv.expression = '(0 - var_side) * (0 - var_open)  if var_side < 0.0 else 0.0'
 
 		var = drv.variables.new()
 		var.name = 'var_side'
@@ -3281,7 +3281,7 @@ class face_shape_keys:
 		drv = f_curve.driver
 		drv.type = 'SCRIPTED'
 		drv.show_debug_info = True
-		drv.expression = 'var_side * (1 + var_open)'
+		drv.expression = 'var_side * (1 + var_open) if var_side > 0.0 else 0.0'
 
 		var = drv.variables.new()
 		var.name = 'var_side'
@@ -3308,7 +3308,7 @@ class face_shape_keys:
 		drv = f_curve.driver
 		drv.type = 'SCRIPTED'
 		drv.show_debug_info = True
-		drv.expression = 'var_side * (0 - var_open)'
+		drv.expression = 'var_side * (0 - var_open)  if var_side > 0.0 else 0.0'
 
 		var = drv.variables.new()
 		var.name = 'var_side'
@@ -3337,7 +3337,10 @@ class face_shape_keys:
 			sh_key_name = data[0]
 			cnt = data[1]
 			loc = data[2]
-			dat = data[3]
+			if isinstance(data[3], str):
+				dat, abs_ = data[3].replace('abs', ''), 1
+			else:
+				dat, abs_ = data[3], 0
 			vtx_grp = data[4]
 			# create shape_key
 			if not sh_key_name in ob.data.shape_keys.key_blocks.keys():
@@ -3361,14 +3364,18 @@ class face_shape_keys:
 				# old construction
 				f_curve = ob.data.shape_keys.key_blocks[sh_key_name].driver_add('value')
 				drv = f_curve.driver
-				drv.type = 'AVERAGE'
+				drv.type = 'SCRIPTED'
 				drv.show_debug_info = True
-
+				if dat<0:
+					drv.expression = 'abs(var) if var<0 else 0.0'
+				else:
+					drv.expression = 'var if var>0 else 0.0'
+				'''
 				point = f_curve.keyframe_points.insert(0,0)
 				point.interpolation = 'LINEAR'
 				point = f_curve.keyframe_points.insert(dat,1)
 				point.interpolation = 'LINEAR'
-
+				'''
 				var = drv.variables.new()
 				var.name = 'var'
 				var.type = 'TRANSFORMS'
@@ -3388,12 +3395,12 @@ class face_shape_keys:
 				drv = f_curve.driver
 				drv.type = 'SCRIPTED'
 				drv.show_debug_info = True
-
+				'''
 				point = f_curve.keyframe_points.insert(0,0)
 				point.interpolation = 'LINEAR'
 				point = f_curve.keyframe_points.insert(dat,1)
 				point.interpolation = 'LINEAR'
-
+				'''
 				# var 1
 				var = drv.variables.new()
 				var.name = 'var'
@@ -3417,12 +3424,27 @@ class face_shape_keys:
 				targ.transform_space = 'LOCAL_SPACE'
 				
 				# expression (var * abs(k*2.5) if  abs(k) < 0.4 else var)
+				# var * abs(correct*2.5) if var>0 and correct<=0 and abs(correct)<abs(-0.4) else 1.0 if var>0 and abs(correct)>=abs(-0.4) else 0.0
+				#var * abs(correct*2.5) if abs(correct)<abs(-0.4) else var if var>=0 else 0.0
 				if action == 'on':
 					mn = 1/abs(k_dat)
-					drv.expression = 'var * abs(correct*' + str(mn) + ') if  abs(correct) < ' + str(abs(k_dat)) + ' else var'
+					if dat<0 and k_dat<0:#'var * abs(correct*%s) if  abs(correct) < %s else var' % (str(mn), str(abs(k_dat)))
+						drv.expression = 'abs(var) * abs(correct*%s) if abs(correct)<abs(%s) and correct<=0 else var if var<=0 else 0.0' % (str(mn), str(k_dat))
+					elif dat<0 and k_dat>0:
+						drv.expression = 'abs(var) * abs(correct*%s) if abs(correct)<abs(%s) and correct>=0 else var if var<=0 else 0.0' % (str(mn), str(k_dat))
+					elif dat>0 and k_dat<0:
+						drv.expression = 'var * abs(correct*%s) if abs(correct)<abs(%s) and correct<=0 else var if var>=0 else 0.0' % (str(mn), str(k_dat))
+					elif dat>0 and k_dat>0:
+						drv.expression = 'var * abs(correct*%s) if abs(correct)<abs(%s) and correct>=0 else var if var>=0 else 0.0' % (str(mn), str(k_dat))
 				elif action == 'off':
-					drv.expression = 'var *(1 - abs(correct/%s))' % str(k_dat)
-
+					if dat<0 and k_dat<0: #'var *(1 - abs(correct/%s))' % str(k_dat)
+						drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var<0 and correct<=0 else abs(var) if var<0 and correct>0 else 0.0' % str(k_dat)
+					elif dat<0 and k_dat>0:
+						drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var<0 and correct>=0 else abs(var) if var<0 and correct<0 else 0.0' % str(k_dat)
+					elif dat>0 and k_dat<0:
+						drv.expression = 'var *(1 - abs(correct/%s)) if var>0 and correct<=0 else var if var>0 and correct>0 else 0.0' % str(k_dat)
+					elif dat>0 and k_dat>0:
+						drv.expression = 'var *(1 - abs(correct/%s)) if var>0 and correct>=0 else var if var>0 and correct<0 else 0.0' % str(k_dat)
 				# remove modifiers
 				fmod = f_curve.modifiers[0]
 				f_curve.modifiers.remove(fmod)
@@ -5012,13 +5034,26 @@ class face_shape_keys:
 			#read drivers
 			data_path = 'key_blocks["%s"].value' % target
 			fcurve = ob.data.shape_keys.animation_data.drivers.find(data_path)
+			'''
+			points = []
+			for point in fcurve.keyframe_points:
+				points.append((point.co, point.interpolation))
+			'''
 			driver = fcurve.driver
 			
 			#driver to properties
 			f_curve = head_bone.driver_add('["%s"]' % target)
 			f_curve.driver.type = driver.type
 			f_curve.driver.expression = driver.expression
-			
+			#add points
+			'''
+			for point in points:
+				print('*'*50, point)
+				pt = f_curve.keyframe_points.insert(point[0][0], point[0][1])
+				pt.interpolation = point[1]
+			for point in f_curve.keyframe_points:
+				print('*'*50, point.co)
+			'''
 			for var in driver.variables:
 				new_var = f_curve.driver.variables.new()
 				new_var.name = var.name
