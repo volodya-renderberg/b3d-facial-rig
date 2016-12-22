@@ -194,7 +194,7 @@ class FACIALRIG_ShapeKeys(bpy.types.Panel):
 			col.prop(context.scene, "brows_shape_keys_for_hand_make_list_enum")
 			col.operator('shape_key.brows_edit_shape_keys').action = 'copy_from_central'
 			col.operator('shape_key.brows_edit_shape_keys', text = 'to Calculate TMP Vertex Group').action = 'vertex_group'
-			col.operator('shape_key.brows_edit_shape_keys', text = 'Bake Shape Key').action = 'bake'
+			col.operator('shape_key.brows_edit_shape_keys', text = 'Bake Shape Key: follow these "Central to Side"').action = 'bake'
 			col.operator('shape_key.edit_brows_shape_keys_open_panel', text = 'close').action = 'close'
 				
 		layout.label("Recalculate Vertex Groups:")

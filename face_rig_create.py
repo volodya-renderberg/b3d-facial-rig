@@ -2883,12 +2883,12 @@ class face_shape_keys:
 		('brow_raiser', '', '', '', 'head_blend.m'),
 		('brow_raiser_out', '', '', '', 'head_blend.m'),
 		('brow_raiser_in', '', '', '', 'head_blend.m'),
-		('brow_raiser_out.r', 'brow_out_R', 'LOC_Y', 1, 'brow_out_blend.r', 'brow_mid_R', 'LOC_Y', 1, 'off'),# 'brow_mid_R', 'LOC_Y', 1
+		('brow_raiser_out.r', 'brow_out_R', 'LOC_Y', 1, 'brow_out_blend.r', 'brow_mid_R', 'LOC_Y', 'abs1', 'off'),# 'brow_mid_R', 'LOC_Y', 1
 		('brow_raiser.r', 'brow_mid_R', 'LOC_Y', 1, 'brow_raiser_blend.r'),
-		('brow_raiser_in.r', 'brow_in_R', 'LOC_Y', 1, 'brow_raiser_in_blend.r', 'brow_mid_R', 'LOC_Y', 1, 'off'),# 'brow_mid_R', 'LOC_Y', 1
-		('brow_raiser_out.l', 'brow_out_L', 'LOC_Y', 1, 'brow_out_blend.l', 'brow_mid_L', 'LOC_Y', 1, 'off'), # 'brow_mid_L', 'LOC_Y', 1
+		('brow_raiser_in.r', 'brow_in_R', 'LOC_Y', 1, 'brow_raiser_in_blend.r', 'brow_mid_R', 'LOC_Y', 'abs1', 'off'),# 'brow_mid_R', 'LOC_Y', 1
+		('brow_raiser_out.l', 'brow_out_L', 'LOC_Y', 1, 'brow_out_blend.l', 'brow_mid_L', 'LOC_Y', 'abs1', 'off'), # 'brow_mid_L', 'LOC_Y', 1
 		('brow_raiser.l', 'brow_mid_L', 'LOC_Y', 1, 'brow_raiser_blend.l'),
-		('brow_raiser_in.l', 'brow_in_L', 'LOC_Y', 1, 'brow_raiser_in_blend.l', 'brow_mid_L', 'LOC_Y', 1, 'off'),# 'brow_mid_L', 'LOC_Y', 1
+		('brow_raiser_in.l', 'brow_in_L', 'LOC_Y', 1, 'brow_raiser_in_blend.l', 'brow_mid_L', 'LOC_Y', 'abs1', 'off'),# 'brow_mid_L', 'LOC_Y', 1
 		('brow_gatherer', '', '', '', 'head_blend.m'),
 		('brow_gatherer.r', 'brow_gather_R', 'LOC_Y', 1, 'brow_gatherer_blend.r'),
 		('brow_gatherer.l', 'brow_gather_L', 'LOC_Y', 1, 'brow_gatherer_blend.l'),
@@ -2897,10 +2897,10 @@ class face_shape_keys:
 		('brow_lower_in', '', '', '', 'head_blend.m'),
 		('brow_lower_out.r', 'brow_out_R', 'LOC_Y', -1, 'brow_out_blend.r'),
 		('brow_lower.r', 'brow_mid_R', 'LOC_Y', -1, 'brow_lower_blend.r'),
-		('brow_lower_in.r', 'brow_in_R', 'LOC_Y', -1, 'brow_lower_in_blend.r', 'brow_mid_R', 'LOC_Y', -1, 'off'),# 'brow_mid_R', 'LOC_Y', -1
+		('brow_lower_in.r', 'brow_in_R', 'LOC_Y', -1, 'brow_lower_in_blend.r', 'brow_mid_R', 'LOC_Y', 'abs1', 'off'),# 'brow_mid_R', 'LOC_Y', -1
 		('brow_lower_out.l', 'brow_out_L', 'LOC_Y', -1, 'brow_out_blend.l'),
 		('brow_lower.l', 'brow_mid_L', 'LOC_Y', -1, 'brow_lower_blend.l'),
-		('brow_lower_in.l', 'brow_in_L', 'LOC_Y',  -1, 'brow_lower_in_blend.l', 'brow_mid_L', 'LOC_Y', -1, 'off'),# 'brow_mid_L', 'LOC_Y', -1
+		('brow_lower_in.l', 'brow_in_L', 'LOC_Y',  -1, 'brow_lower_in_blend.l', 'brow_mid_L', 'LOC_Y', 'abs1', 'off'),# 'brow_mid_L', 'LOC_Y', -1
 		#BLINK
 		('blink_up_lid',  '',  '',  '',  'head_blend.m'),
 		('blink_up_lid.r',  'blink_R',  'LOC_X',  1,  'head_blend.r'),
@@ -3337,10 +3337,7 @@ class face_shape_keys:
 			sh_key_name = data[0]
 			cnt = data[1]
 			loc = data[2]
-			if isinstance(data[3], str):
-				dat, abs_ = data[3].replace('abs', ''), 1
-			else:
-				dat, abs_ = data[3], 0
+			dat = data[3]
 			vtx_grp = data[4]
 			# create shape_key
 			if not sh_key_name in ob.data.shape_keys.key_blocks.keys():
@@ -3357,7 +3354,10 @@ class face_shape_keys:
 			try:
 				k_cnt = data[5]
 				k_loc = data[6]
-				k_dat = data[7]
+				if isinstance(data[7], str):
+					k_dat, abs_ = float(data[7].replace('abs', '')), 1
+				else:
+					k_dat, abs_ = data[7], 0
 				action = data[8]
 			
 			except:
@@ -3437,14 +3437,21 @@ class face_shape_keys:
 					elif dat>0 and k_dat>0:
 						drv.expression = 'var * abs(correct*%s) if abs(correct)<abs(%s) and correct>=0 else var if var>=0 else 0.0' % (str(mn), str(k_dat))
 				elif action == 'off':
-					if dat<0 and k_dat<0: #'var *(1 - abs(correct/%s))' % str(k_dat)
-						drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var<0 and correct<=0 else abs(var) if var<0 and correct>0 else 0.0' % str(k_dat)
-					elif dat<0 and k_dat>0:
-						drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var<0 and correct>=0 else abs(var) if var<0 and correct<0 else 0.0' % str(k_dat)
-					elif dat>0 and k_dat<0:
-						drv.expression = 'var *(1 - abs(correct/%s)) if var>0 and correct<=0 else var if var>0 and correct>0 else 0.0' % str(k_dat)
-					elif dat>0 and k_dat>0:
-						drv.expression = 'var *(1 - abs(correct/%s)) if var>0 and correct>=0 else var if var>0 and correct<0 else 0.0' % str(k_dat)
+					# k_dat 1 or -1
+					if abs_:
+						if dat<0 and k_dat>0:
+							drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var<=0 else 0.0' % str(k_dat)
+						elif dat>0 and k_dat>0:
+							drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var>=0 else 0.0' % str(k_dat)
+					else:
+						if dat<0 and k_dat<0: #'var *(1 - abs(correct/%s))' % str(k_dat)
+							drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var<0 and correct<=0 else abs(var) if var<0 and correct>0 else 0.0' % str(k_dat)
+						elif dat<0 and k_dat>0:
+							drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var<0 and correct>=0 else abs(var) if var<0 and correct<0 else 0.0' % str(k_dat)
+						elif dat>0 and k_dat<0:
+							drv.expression = 'var *(1 - abs(correct/%s)) if var>0 and correct<=0 else var if var>0 and correct>0 else 0.0' % str(k_dat)
+						elif dat>0 and k_dat>0:
+							drv.expression = 'var *(1 - abs(correct/%s)) if var>0 and correct>=0 else var if var>0 and correct<0 else 0.0' % str(k_dat)
 				# remove modifiers
 				fmod = f_curve.modifiers[0]
 				f_curve.modifiers.remove(fmod)
@@ -4408,6 +4415,7 @@ class face_shape_keys:
 					target.data[v.index].co[2] = basis_v[2] + (target_v[2] - basis_v[2])*vtx_group.weight(v.index)
 			print('"%s" Bake!' % target_name)
 			target.vertex_group = 'head_blend.m'
+			target.value = 0.0
 			
 		return(True, 'ok!')
 		
