@@ -4637,13 +4637,13 @@ class face_shape_keys:
 		return(True, 'All Right!')
 	
 	def insert_in_between(self, context, shape_key, num):
-		pass
+		pass#1
 		#passport().string_add_to_passport(bpy.context, 'list_of_inbetweens', shape_key)
 		list_of_inbetweens = passport().read_passport(context, 'list_of_inbetweens')
 		if list_of_inbetweens[0]:
 			if shape_key in list_of_inbetweens[1]:
 				return(False, '****** Inbetween Shape Key Already Exists!')
-		
+		#2
 		# ******************** test passoport *****************************
 		mesh_passport = passport().read_passport(context, 'mesh_passport')
 		if mesh_passport[0]:
@@ -4662,20 +4662,18 @@ class face_shape_keys:
 			ob = bpy.data.objects[body_name]
 		assert ob.type == 'MESH'
 		
-		#ob = bpy.context.object
-		#assert ob.type == 'MESH'
-		
+		#3
 		# from  -- central_side_shape_keys
 		sh_keys = ob.data.shape_keys.key_blocks.keys()
 		if not shape_key in sh_keys:
 			return(False, '****** This Shape Key not found!')
-		
+		#4
 		# get shape keys data
 		central = ob.data.shape_keys.key_blocks[shape_key]
 		basis = ob.data.shape_keys.key_blocks['Basis']
 		vtx_group = central.vertex_group
 		fcurves = ob.data.shape_keys.animation_data.drivers.items()
-		
+		#5
 		# new rebild base shape key
 		# -- exist fcurve
 		fcurve_ex = False
@@ -4685,7 +4683,7 @@ class face_shape_keys:
 				f_curve = fc[1]
 				fcurve_ex = True
 				break
-		
+		#6
 		# -- get max_value
 		if fcurve_ex:
 			max_value = False
@@ -4757,7 +4755,7 @@ class face_shape_keys:
 
 			fmod = f_curve.modifiers[0]
 			f_curve.modifiers.remove(fmod)
-		
+		#7
 		# ********* CENTRAL
 		list_k = []
 		for i in range(1, num):
@@ -4824,7 +4822,7 @@ class face_shape_keys:
 		# add shape key in 'list_of_inbetweens'
 		#passport().string_add_to_passport(bpy.context, 'list_of_inbetweens', shape_key)
 		passport().key_data_add_to_passport(context, 'list_of_inbetweens', shape_key, list_k)
-		
+		#8
 		# ********* SIDES
 		
 		try:
@@ -4971,7 +4969,7 @@ class face_shape_keys:
 					
 					fmod = f_curve.modifiers[0]
 					f_curve.modifiers.remove(fmod)
-				
+		#9		
 		# text data block
 		try:
 			text = bpy.data.texts['rig_meta_data']
@@ -5003,6 +5001,8 @@ class face_shape_keys:
 	
 	def insert_inbetween(self, context, target, weight, weight_exists): # NEW
 		pass
+		weight_exists.append(0.0)
+		weight_exists.append(1.0)
 		#test weight
 		weight = round(weight, 2)
 		if weight == 0.0 or weight == 1.0:
@@ -5032,7 +5032,244 @@ class face_shape_keys:
 		if not ob.type == 'MESH':
 			return(False, '****** obj of Body not Mesh!')
 		
+		#CENTRAL
+		#1
+		#get before, after
+		before = 0
+		after = 1
+		for num in weight_exists:
+			if num<weight and num>before:
+				before = num
+			elif num>weight and num<after:
+				after = num
+		#2		
+		#get befor, after shape_keys
+		#--before
+		if before == 0:
+			bafore_name = 'Basis'
+		else:
+			bafore_name = target + str(round(before, 2)).replace('0', '')
+		before_shkey = ob.data.shape_keys.key_blocks[bafore_name]
+		#--after
+		if after < 1:
+			after_name = target + str(round(after, 2)).replace('0', '')
+		else:
+			after_name = target
+		after_shkey = ob.data.shape_keys.key_blocks[after_name]
 		
+		#3
+		#create shape_key
+		#--create
+		sh_keys = ob.data.shape_keys.key_blocks.keys()
+		new_shape_key_name = target + str(round(weight, 2)).replace('0', '')
+		if not new_shape_key_name in sh_keys:
+			shkey = ob.shape_key_add(name=new_shape_key_name, from_mix=True)
+			shkey.vertex_group = ob.data.shape_keys.key_blocks[target].vertex_group
+			
+		#--make vtx co
+		for v in ob.data.vertices:
+			before_v = before_shkey.data[v.index].co
+			after_v = after_shkey.data[v.index].co
+			shkey.data[v.index].co[0] = before_v[0] + (after_v[0] - before_v[0])*(weight - before)
+			shkey.data[v.index].co[1] = before_v[1] + (after_v[1] - before_v[1])*(weight - before)
+			shkey.data[v.index].co[2] = before_v[2] + (after_v[2] - before_v[2])*(weight - before)
+		#4
+		#Driver to DEF-head
+		if not ob_arm.animation_data.drivers.find('pose.bones["DEF-head"]["%s"]' % target):
+			self.driver_to_def_head(ob, ob_arm, head_bone, target)
+		
+		#5
+		#ADD THIS driver
+		FC = ob.data.shape_keys.key_blocks[new_shape_key_name].driver_add('value')
+		
+		#add driver
+		drv = FC.driver
+		drv.type = 'SCRIPTED'
+		drv.expression = 'input'
+		drv.show_debug_info = True
+		
+		#add points
+		#--befor
+		pt_befor = FC.keyframe_points.insert(before, 0)
+		pt_befor.interpolation = 'LINEAR'
+		#--this
+		pt = FC.keyframe_points.insert(weight, 1)
+		pt.interpolation = 'LINEAR'
+		#--after
+		pt_after = FC.keyframe_points.insert(after, 0)
+		pt_after.interpolation = 'LINEAR'
+		
+		#add var
+		var = drv.variables.new()
+		var.name = 'input'
+		var.type = 'SINGLE_PROP'
+		
+		targ = var.targets[0]
+		targ.id = ob_arm
+		targ.data_path = 'pose.bones["DEF-head"]["%s"]' % target
+		
+		#remove modifiers
+		try:
+			fmod = FC.modifiers[0]
+			FC.modifiers.remove(fmod)
+		except:
+			pass
+		
+		#EDIT BEFORE driver
+		if before:
+			data_path = 'key_blocks["%s"].value' % bafore_name
+			FC = ob.data.shape_keys.animation_data.drivers.find(data_path)
+			drv = FC.driver
+			drv.type = 'SCRIPTED'
+			drv.expression = 'input'
+			drv.show_debug_info = True
+			
+			#remove points
+			points = []
+			for point in FC.keyframe_points:
+				points.append(tuple(point.co))
+				try:
+					FC.keyframe_points.remove(point)
+				except:
+					pass
+			
+			#add points
+			#--befor
+			pt_befor = FC.keyframe_points.insert(points[0][0], points[0][1])
+			pt_befor.interpolation = 'LINEAR'
+			#--this
+			pt = FC.keyframe_points.insert(points[1][0], points[1][1])
+			pt.interpolation = 'LINEAR'
+			#--after
+			pt_after = FC.keyframe_points.insert(weight, 0)
+			pt_after.interpolation = 'LINEAR'
+			
+			#add var
+			var = drv.variables.new()
+			var.name = 'input'
+			var.type = 'SINGLE_PROP'
+			
+			targ = var.targets[0]
+			targ.id = ob_arm
+			targ.data_path = 'pose.bones["DEF-head"]["%s"]' % target
+			
+			#remove modifiers
+			try:
+				fmod = FC.modifiers[0]
+				FC.modifiers.remove(fmod)
+			except:
+				pass
+			
+		#EDIT AFTER driver
+		data_path = 'key_blocks["%s"].value' % after_name
+		FC = ob.data.shape_keys.animation_data.drivers.find(data_path)
+		drv = FC.driver
+		drv.type = 'SCRIPTED'
+		drv.expression = 'input'
+		drv.show_debug_info = True
+		
+		#remove points
+		points = []
+		for point in FC.keyframe_points:
+			points.append(tuple(point.co))
+			try:
+				FC.keyframe_points.remove(point)
+			except:
+				pass
+		
+		#add points
+		#--befor
+		pt_befor = FC.keyframe_points.insert(weight, 0)
+		pt_befor.interpolation = 'LINEAR'
+		#--this
+		if after < 1:
+			#--this
+			pt = FC.keyframe_points.insert(points[1][0], points[1][1])
+			pt.interpolation = 'LINEAR'
+			#--after
+			pt_after = FC.keyframe_points.insert(points[2][0], points[2][1])
+			pt_after.interpolation = 'LINEAR'
+		else:
+			pt = FC.keyframe_points.insert(1, 1)
+			pt.interpolation = 'LINEAR'
+		
+		#add var
+		var = drv.variables.new()
+		var.name = 'input'
+		var.type = 'SINGLE_PROP'
+		
+		targ = var.targets[0]
+		targ.id = ob_arm
+		targ.data_path = 'pose.bones["DEF-head"]["%s"]' % target
+		
+		#remove modifiers
+		try:
+			fmod = FC.modifiers[0]
+			FC.modifiers.remove(fmod)
+		except:
+			pass
+		
+		print('*'*250, after_name, FC, points)
+		
+		'''
+		#add properties
+		if not target in head_bone:
+			bpy.types.ArmatureBones.driver = bpy.props.FloatProperty(name = target, default = 1.0, min = 0.0, max = 1.0)
+		head_bone[target] = 0.00
+		
+		if not ob_arm.animation_data.drivers.find('pose.bones["DEF-head"]["%s"]' % target):
+			#read drivers
+			data_path = 'key_blocks["%s"].value' % target
+			fcurve = ob.data.shape_keys.animation_data.drivers.find(data_path)
+			driver = fcurve.driver
+			
+			#driver to properties
+			f_curve = head_bone.driver_add('["%s"]' % target)
+			f_curve.driver.type = driver.type
+			f_curve.driver.expression = driver.expression
+			
+			for var in driver.variables:
+				new_var = f_curve.driver.variables.new()
+				new_var.name = var.name
+				new_var.type = var.type
+				new_targ = new_var.targets[0]
+				targ = var.targets[0]
+				if var.type == 'TRANSFORMS':
+					new_targ.id = targ.id
+					print(new_targ.id.type)
+					if targ.id.type == 'ARMATURE':
+						new_targ.bone_target = targ.bone_target
+					new_targ.transform_type = targ.transform_type
+					new_targ.transform_space = targ.transform_space
+				elif var.type == 'SINGLE_PROP':
+					new_targ.id = targ.id
+					new_targ.data_path = targ.data_path
+			
+			#remove driver from mesh
+			ob.data.shape_keys.key_blocks[target].driver_remove('value')
+		
+			#add driver to mesh
+			FC = ob.data.shape_keys.key_blocks[target].driver_add('value')
+			drv = FC.driver
+			drv.type = 'SCRIPTED'
+			drv.expression = 'input'
+			drv.show_debug_info = True
+			
+			var = drv.variables.new()
+			var.name = 'input'
+			var.type = 'SINGLE_PROP'
+			
+			targ = var.targets[0]
+			targ.id = ob_arm
+			targ.data_path = 'pose.bones["DEF-head"]["%s"]' % target
+		else:
+			print('Driver Already Exists!')
+		'''
+			
+		return(True, 'Ok!')
+		
+	def driver_to_def_head(self, ob, ob_arm, head_bone, target):
+		pass
 		#add properties
 		if not target in head_bone:
 			bpy.types.ArmatureBones.driver = bpy.props.FloatProperty(name = target, default = 1.0, min = 0.0, max = 1.0)
@@ -5081,7 +5318,7 @@ class face_shape_keys:
 			
 			#remove driver from mesh
 			ob.data.shape_keys.key_blocks[target].driver_remove('value')
-		
+			
 			#add driver to mesh
 			FC = ob.data.shape_keys.key_blocks[target].driver_add('value')
 			drv = FC.driver
@@ -5096,11 +5333,11 @@ class face_shape_keys:
 			targ = var.targets[0]
 			targ.id = ob_arm
 			targ.data_path = 'pose.bones["DEF-head"]["%s"]' % target
-		else:
-			print('Driver Already Exists!')
 			
-		return(True, 'Ok!')
-		
+			return(True, f_curve)
+		else:
+			return(False, 'Already Exists')
+	
 	def get_inbetween_exists(self, context, target):
 		pass
 		#get ob
