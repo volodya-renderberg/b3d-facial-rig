@@ -5070,9 +5070,9 @@ class face_shape_keys:
 		for v in ob.data.vertices:
 			before_v = before_shkey.data[v.index].co
 			after_v = after_shkey.data[v.index].co
-			shkey.data[v.index].co[0] = before_v[0] + (after_v[0] - before_v[0])*(weight - before)
-			shkey.data[v.index].co[1] = before_v[1] + (after_v[1] - before_v[1])*(weight - before)
-			shkey.data[v.index].co[2] = before_v[2] + (after_v[2] - before_v[2])*(weight - before)
+			shkey.data[v.index].co[0] = before_v[0] + (after_v[0] - before_v[0])*((weight - before)/(after - before))
+			shkey.data[v.index].co[1] = before_v[1] + (after_v[1] - before_v[1])*((weight - before)/(after - before))
+			shkey.data[v.index].co[2] = before_v[2] + (after_v[2] - before_v[2])*((weight - before)/(after - before))
 		#4
 		#Driver to DEF-head
 		if not ob_arm.animation_data.drivers.find('pose.bones["DEF-head"]["%s"]' % target):

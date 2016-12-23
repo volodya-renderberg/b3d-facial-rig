@@ -179,8 +179,9 @@ class FACIALRIG_ShapeKeys(bpy.types.Panel):
 			col.prop(wm, 'weight_inbetween')
 			#exists
 			col.label('Exists Inbetweens:')
-			for weight in G.insert_inbetween_exists:
-				col.label(str(weight))
+			if G.insert_inbetween_exists:
+				for weight in G.insert_inbetween_exists:
+					col.label(str(weight))
 			row = col.row(align = True)
 			row.operator('shape_key.insert_inbetween', text = 'Insert')
 			row.operator('shape_key.insert_inbetween_close_panel', text = 'close')
@@ -622,14 +623,18 @@ class SHAPE_keys_insert_inbetween_panel(bpy.types.Operator):
 		#result = face_shape_keys().insert_in_between(context, self.target, (self.num + 1))
 		#if not result[0]:
 		#	self.report({'WARNING'}, result[1])
-		G.insert_inbetween_panel = True
-		G.insert_inbetween_target = self.target
 		#get exists list
 		res, mess = G.face_shape_keys.get_inbetween_exists(context, self.target)
 		if not res:
 			self.report({'WARNING'}, mess)
 		else:
 			G.insert_inbetween_exists = mess
+			if G.insert_inbetween_exists:
+				G.insert_inbetween_exists.sort()
+		
+		G.insert_inbetween_panel = True
+		G.insert_inbetween_target = self.target
+		
 		return {'FINISHED'}
 
 	def invoke(self, context, event):
@@ -651,6 +656,7 @@ class SHAPE_keys_insert_inbetween(bpy.types.Operator):
 			self.report({'WARNING'}, mess)
 		else:
 			self.report({'INFO'}, mess)
+		G.insert_inbetween_panel = False
 		return {'FINISHED'}
 	
 	def invoke(self, context, event):
