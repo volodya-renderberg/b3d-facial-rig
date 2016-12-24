@@ -104,7 +104,7 @@ class passport:
 		self.text.clear()
 		self.text.write(json.dumps(data, sort_keys=True, indent=4))
 		
-	def key_data_add_to_passport(self, context, dict_name, key, data):
+	def key_data_add_to_passport(self, context, dict_name, key, data, append=0):
 		self.make_passport()
 		string = self.text.as_string()
 		if string:
@@ -119,13 +119,19 @@ class passport:
 			work_dict = {}
 		
 		# append data
-		work_dict[key]= data
+		if append:
+			if work_dict:
+				work_dict[key].append(data)
+			else:
+				work_dict[key]= [data]
+		else:
+			work_dict[key]= data
 		global_dict[dict_name] = work_dict
 		
 		# write text block
 		self.text.clear()
 		self.text.write(json.dumps(global_dict, sort_keys=True, indent=4))
-		
+			
 
 class face_armature:
 	def __init__(self):
@@ -4999,7 +5005,7 @@ class face_shape_keys:
 		
 		return(True, 'All Right!')
 	
-	def insert_inbetween(self, context, target, weight, weight_exists): # NEW
+	def insert_inbetween(self, context, target, weight, weight_exists, method): # NEW
 		pass
 		weight_exists.append(0.0)
 		weight_exists.append(1.0)
@@ -5056,6 +5062,10 @@ class face_shape_keys:
 		else:
 			after_name = target
 		after_shkey = ob.data.shape_keys.key_blocks[after_name]
+		#--basis
+		basis_shkey = ob.data.shape_keys.key_blocks['Basis']
+		#--target
+		target_shkey = ob.data.shape_keys.key_blocks[target]
 		
 		#3
 		#create shape_key
@@ -5070,9 +5080,16 @@ class face_shape_keys:
 		for v in ob.data.vertices:
 			before_v = before_shkey.data[v.index].co
 			after_v = after_shkey.data[v.index].co
-			shkey.data[v.index].co[0] = before_v[0] + (after_v[0] - before_v[0])*((weight - before)/(after - before))
-			shkey.data[v.index].co[1] = before_v[1] + (after_v[1] - before_v[1])*((weight - before)/(after - before))
-			shkey.data[v.index].co[2] = before_v[2] + (after_v[2] - before_v[2])*((weight - before)/(after - before))
+			if method:
+				shkey.data[v.index].co[0] = before_v[0] + (after_v[0] - before_v[0])*((weight - before)/(after - before))
+				shkey.data[v.index].co[1] = before_v[1] + (after_v[1] - before_v[1])*((weight - before)/(after - before))
+				shkey.data[v.index].co[2] = before_v[2] + (after_v[2] - before_v[2])*((weight - before)/(after - before))
+			else:
+				before_v = basis_shkey.data[v.index].co
+				after_v = target_shkey.data[v.index].co
+				shkey.data[v.index].co[0] = before_v[0] + (after_v[0] - before_v[0])*weight
+				shkey.data[v.index].co[1] = before_v[1] + (after_v[1] - before_v[1])*weight
+				shkey.data[v.index].co[2] = before_v[2] + (after_v[2] - before_v[2])*weight
 		#4
 		#Driver to DEF-head
 		if not ob_arm.animation_data.drivers.find('pose.bones["DEF-head"]["%s"]' % target):
@@ -5209,7 +5226,8 @@ class face_shape_keys:
 		except:
 			pass
 		
-		print('*'*250, after_name, FC, points)
+		#PASSPORT
+		passport().key_data_add_to_passport(context, 'list_of_inbetweens', target, weight, 1)
 		
 		'''
 		#add properties

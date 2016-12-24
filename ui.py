@@ -49,6 +49,7 @@ def set_targets_list():
 
 def set_props():
 	bpy.types.WindowManager.weight_inbetween = bpy.props.FloatProperty(name="weight_inbetween", min = 0.0, max = 1.0, default=0.5, update = None)
+	bpy.types.WindowManager.method = bpy.props.BoolProperty(name='between adjacent', default = True, update = None)
 
 class get_data_class():
 	def __init__(self):
@@ -84,7 +85,7 @@ class FACIALRIG_Help(bpy.types.Panel):
 	bl_region_type = "TOOLS"
 	bl_category = "Facial Rig"
 	layout = 'HELP'
-	#bl_options = {'DEFAULT_CLOSED'}
+	bl_options = {'DEFAULT_CLOSED'}
 		
 	def draw(self, context):
 		layout = self.layout
@@ -161,6 +162,7 @@ class FACIALRIG_ShapeKeys(bpy.types.Panel):
 	bl_region_type = "TOOLS"
 	bl_category = "Facial Rig"
 	layout = 'Shape_Keys'
+	bl_options = {'DEFAULT_CLOSED'}
 	
 	def draw(self, context):
 		layout = self.layout
@@ -177,6 +179,7 @@ class FACIALRIG_ShapeKeys(bpy.types.Panel):
 			#weight
 			wm = context.window_manager
 			col.prop(wm, 'weight_inbetween')
+			col.prop(wm, 'method')
 			#exists
 			col.label('Exists Inbetweens:')
 			if G.insert_inbetween_exists:
@@ -218,7 +221,7 @@ class FACIALRIG_Shape_Keys_Sculpt(bpy.types.Panel):
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "TOOLS"
 	bl_category = "Facial Rig"
-	#layout = 'Shape_Keys'
+	bl_options = {'DEFAULT_CLOSED'}
 	
 	def draw(self, context):
 		layout = self.layout
@@ -648,10 +651,11 @@ class SHAPE_keys_insert_inbetween(bpy.types.Operator):
 	
 	def execute(self, context):
 		weight = context.window_manager.weight_inbetween
+		method = context.window_manager.method
 		weight_exists = G.insert_inbetween_exists
 		target = G.insert_inbetween_target
 		
-		res, mess = G.face_shape_keys.insert_inbetween(context, target, weight, weight_exists)
+		res, mess = G.face_shape_keys.insert_inbetween(context, target, weight, weight_exists, method)
 		if not res:
 			self.report({'WARNING'}, mess)
 		else:
