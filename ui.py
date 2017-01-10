@@ -171,7 +171,7 @@ class FACIALRIG_ShapeKeys(bpy.types.Panel):
 		col = layout.column(align=1)
 		col.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Shape Keys').action = 'create_shape_keys'
 		col.operator("shape_key.generate", icon='SHAPEKEY_DATA', text = 'Autolid').action = 'create_autolid'
-		col.operator("insert.inbetween", icon='SHAPEKEY_DATA', text = 'Add Inbetween')
+		#col.operator("insert.inbetween", icon='SHAPEKEY_DATA', text = 'Add Inbetween')
 		col.operator("shape_key.insert_inbetween_panel", icon='SHAPEKEY_DATA', text = 'Insert Inbetween:')
 		if G.insert_inbetween_panel:
 			#target
