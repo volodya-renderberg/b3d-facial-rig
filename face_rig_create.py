@@ -120,7 +120,7 @@ class passport:
 		
 		# append data
 		if append:
-			if work_dict:
+			if work_dict.get(key):
 				work_dict[key].append(data)
 			else:
 				work_dict[key]= [data]
@@ -2948,6 +2948,7 @@ class face_shape_keys:
 		'cheek_suck':('cheek_suck.r', 'cheek_suck.l'),
 		'cheek_sqz':('cheek_sqz.r', 'cheek_sqz.l'),
 		'cheek_raise':('cheek_raise.r', 'cheek_raise.l'),
+		'brow_gatherer':('brow_gatherer.r', 'brow_gatherer.l'),
 		'brow_raiser':('brow_raiser.r', 'brow_raiser.l'),
 		'brow_raiser_out':('brow_raiser_out.r', 'brow_raiser_out.l'),
 		'brow_raiser_in':('brow_raiser_in.r', 'brow_raiser_in.l'),
@@ -5136,7 +5137,7 @@ class face_shape_keys:
 			FC.modifiers.remove(fmod)
 		except:
 			pass
-		
+		#6
 		#EDIT BEFORE driver
 		if before:
 			data_path = 'key_blocks["%s"].value' % bafore_name
@@ -5181,7 +5182,7 @@ class face_shape_keys:
 				FC.modifiers.remove(fmod)
 			except:
 				pass
-			
+		#7
 		#EDIT AFTER driver
 		data_path = 'key_blocks["%s"].value' % after_name
 		FC = ob.data.shape_keys.animation_data.drivers.find(data_path)
@@ -5230,68 +5231,196 @@ class face_shape_keys:
 			FC.modifiers.remove(fmod)
 		except:
 			pass
-		
+		#8
 		#PASSPORT
 		passport().key_data_add_to_passport(context, 'list_of_inbetweens', target, weight, 1)
 	
+		#9
 		#SIDE
+		if not self.central_side_shape_keys.get(target):
+			#return(True, 'Ok!')
+			return(False, 'Not Sides!')
 		
-		
-		'''
-		#add properties
-		if not target in head_bone:
-			bpy.types.ArmatureBones.driver = bpy.props.FloatProperty(name = target, default = 1.0, min = 0.0, max = 1.0)
-		head_bone[target] = 0.00
-		
-		if not ob_arm.animation_data.drivers.find('pose.bones["DEF-head"]["%s"]' % target):
-			#read drivers
-			data_path = 'key_blocks["%s"].value' % target
-			fcurve = ob.data.shape_keys.animation_data.drivers.find(data_path)
-			driver = fcurve.driver
+		for side_name in self.central_side_shape_keys[target]:
+			#10
+			#get befor, after shape_keys
+			#--before
+			if before == 0:
+				bafore_name = 'Basis'
+			else:
+				bafore_name = side_name + str(round(before, 2)).replace('0', '')
+			before_shkey = ob.data.shape_keys.key_blocks[bafore_name]
+			#--after
+			if after < 1:
+				after_name = side_name + str(round(after, 2)).replace('0', '')
+			else:
+				after_name = side_name
+			after_shkey = ob.data.shape_keys.key_blocks[after_name]
+			#--target
+			target_shkey = ob.data.shape_keys.key_blocks[side_name]
 			
-			#driver to properties
-			f_curve = head_bone.driver_add('["%s"]' % target)
-			f_curve.driver.type = driver.type
-			f_curve.driver.expression = driver.expression
+			#11
+			#create shape_key
+			#--create
+			sh_keys = ob.data.shape_keys.key_blocks.keys()
+			new_shape_key_name = side_name + str(round(weight, 2)).replace('0', '')
+			if not new_shape_key_name in sh_keys:
+				shkey = ob.shape_key_add(name=new_shape_key_name, from_mix=True)
+				shkey.vertex_group = ob.data.shape_keys.key_blocks[side_name].vertex_group
+				
+			#--make vtx co
+			for v in ob.data.vertices:
+				before_v = before_shkey.data[v.index].co
+				after_v = after_shkey.data[v.index].co
+				if method:
+					shkey.data[v.index].co[0] = before_v[0] + (after_v[0] - before_v[0])*((weight - before)/(after - before))
+					shkey.data[v.index].co[1] = before_v[1] + (after_v[1] - before_v[1])*((weight - before)/(after - before))
+					shkey.data[v.index].co[2] = before_v[2] + (after_v[2] - before_v[2])*((weight - before)/(after - before))
+				else:
+					before_v = basis_shkey.data[v.index].co
+					after_v = target_shkey.data[v.index].co
+					shkey.data[v.index].co[0] = before_v[0] + (after_v[0] - before_v[0])*weight
+					shkey.data[v.index].co[1] = before_v[1] + (after_v[1] - before_v[1])*weight
+					shkey.data[v.index].co[2] = before_v[2] + (after_v[2] - before_v[2])*weight
+					
+			#12
+			#Driver to DEF-head
+			if not ob_arm.animation_data.drivers.find('pose.bones["DEF-head"]["%s"]' % side_name):
+				self.driver_to_def_head(ob, ob_arm, head_bone, side_name)
+				
+			#13
+			#ADD THIS driver
+			FC = ob.data.shape_keys.key_blocks[new_shape_key_name].driver_add('value')
 			
-			for var in driver.variables:
-				new_var = f_curve.driver.variables.new()
-				new_var.name = var.name
-				new_var.type = var.type
-				new_targ = new_var.targets[0]
-				targ = var.targets[0]
-				if var.type == 'TRANSFORMS':
-					new_targ.id = targ.id
-					print(new_targ.id.type)
-					if targ.id.type == 'ARMATURE':
-						new_targ.bone_target = targ.bone_target
-					new_targ.transform_type = targ.transform_type
-					new_targ.transform_space = targ.transform_space
-				elif var.type == 'SINGLE_PROP':
-					new_targ.id = targ.id
-					new_targ.data_path = targ.data_path
-			
-			#remove driver from mesh
-			ob.data.shape_keys.key_blocks[target].driver_remove('value')
-		
-			#add driver to mesh
-			FC = ob.data.shape_keys.key_blocks[target].driver_add('value')
+			#add driver
 			drv = FC.driver
 			drv.type = 'SCRIPTED'
 			drv.expression = 'input'
 			drv.show_debug_info = True
 			
+			#add points
+			#--befor
+			pt_befor = FC.keyframe_points.insert(before, 0)
+			pt_befor.interpolation = 'LINEAR'
+			#--this
+			pt = FC.keyframe_points.insert(weight, 1)
+			pt.interpolation = 'LINEAR'
+			#--after
+			pt_after = FC.keyframe_points.insert(after, 0)
+			pt_after.interpolation = 'LINEAR'
+			
+			#add var
 			var = drv.variables.new()
 			var.name = 'input'
 			var.type = 'SINGLE_PROP'
 			
 			targ = var.targets[0]
 			targ.id = ob_arm
-			targ.data_path = 'pose.bones["DEF-head"]["%s"]' % target
-		else:
-			print('Driver Already Exists!')
-		'''
+			targ.data_path = 'pose.bones["DEF-head"]["%s"]' % side_name
 			
+			#remove modifiers
+			try:
+				fmod = FC.modifiers[0]
+				FC.modifiers.remove(fmod)
+			except:
+				pass
+			
+			#14
+			#EDIT BEFORE driver
+			if before:
+				data_path = 'key_blocks["%s"].value' % bafore_name
+				FC = ob.data.shape_keys.animation_data.drivers.find(data_path)
+				drv = FC.driver
+				drv.type = 'SCRIPTED'
+				drv.expression = 'input'
+				drv.show_debug_info = True
+				
+				#remove points
+				points = []
+				for point in FC.keyframe_points:
+					points.append(tuple(point.co))
+					try:
+						FC.keyframe_points.remove(point)
+					except:
+						pass
+				
+				#add points
+				#--befor
+				pt_befor = FC.keyframe_points.insert(points[0][0], points[0][1])
+				pt_befor.interpolation = 'LINEAR'
+				#--this
+				pt = FC.keyframe_points.insert(points[1][0], points[1][1])
+				pt.interpolation = 'LINEAR'
+				#--after
+				pt_after = FC.keyframe_points.insert(weight, 0)
+				pt_after.interpolation = 'LINEAR'
+				
+				#add var
+				var = drv.variables.new()
+				var.name = 'input'
+				var.type = 'SINGLE_PROP'
+				
+				targ = var.targets[0]
+				targ.id = ob_arm
+				targ.data_path = 'pose.bones["DEF-head"]["%s"]' % side_name
+				
+				#remove modifiers
+				try:
+					fmod = FC.modifiers[0]
+					FC.modifiers.remove(fmod)
+				except:
+					pass
+				
+			#15
+			#EDIT AFTER driver
+			data_path = 'key_blocks["%s"].value' % after_name
+			FC = ob.data.shape_keys.animation_data.drivers.find(data_path)
+			drv = FC.driver
+			drv.type = 'SCRIPTED'
+			drv.expression = 'input'
+			drv.show_debug_info = True
+			
+			#remove points
+			points = []
+			for point in FC.keyframe_points:
+				points.append(tuple(point.co))
+				try:
+					FC.keyframe_points.remove(point)
+				except:
+					pass
+			
+			#add points
+			#--befor
+			pt_befor = FC.keyframe_points.insert(weight, 0)
+			pt_befor.interpolation = 'LINEAR'
+			#--this
+			if after < 1:
+				#--this
+				pt = FC.keyframe_points.insert(points[1][0], points[1][1])
+				pt.interpolation = 'LINEAR'
+				#--after
+				pt_after = FC.keyframe_points.insert(points[2][0], points[2][1])
+				pt_after.interpolation = 'LINEAR'
+			else:
+				pt = FC.keyframe_points.insert(1, 1)
+				pt.interpolation = 'LINEAR'
+			
+			#add var
+			var = drv.variables.new()
+			var.name = 'input'
+			var.type = 'SINGLE_PROP'
+			
+			targ = var.targets[0]
+			targ.id = ob_arm
+			targ.data_path = 'pose.bones["DEF-head"]["%s"]' % side_name
+			
+			#remove modifiers
+			try:
+				fmod = FC.modifiers[0]
+				FC.modifiers.remove(fmod)
+			except:
+				pass
+
 		return(True, 'Ok!')
 		
 	def driver_to_def_head(self, ob, ob_arm, head_bone, target):
