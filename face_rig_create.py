@@ -1503,6 +1503,11 @@ class face_armature:
 			except:
 				b_group = rig_obj.pose.bone_groups.new(name="Face.yellow.cnts")
 			b_group.color_set = 'THEME09'
+			#b_group.color_set = 'CUSTOM'
+			#b_group.color_set.colorors.normal = (0.0, 0.0, 0.0)
+			#b_group.colorors.select = (0.878, 0.878, 0.173)
+			#b_group.colorors.active = (0.506, 0.902, 0.078)
+			
 		elif color == 'GREEN':
 			try:
 				b_group = rig_obj.pose.bone_groups["Face.green.cnts"]
@@ -5228,6 +5233,9 @@ class face_shape_keys:
 		
 		#PASSPORT
 		passport().key_data_add_to_passport(context, 'list_of_inbetweens', target, weight, 1)
+	
+		#SIDE
+		
 		
 		'''
 		#add properties
