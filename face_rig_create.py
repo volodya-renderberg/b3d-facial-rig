@@ -2867,6 +2867,7 @@ class face_shape_keys:
 		('jaw_fwd', 'back_fwd_chew', 'LOC_X', 1, 'head_blend.m'),
 		('jaw_back', 'back_fwd_chew', 'LOC_X', -1, 'head_blend.m'),
 		('jaw_chew', 'back_fwd_chew', 'LOC_Y', 1, 'head_blend.m'),
+		('chin_wrinkle', 'chin_wrinkle', 'LOC_Y', 1, 'head_blend.m'),
 		('lip_down', 'lip_M', 'LOC_Y', -1, 'head_blend.m'),
 		('lip_raise', 'lip_M', 'LOC_Y', 1 , 'head_blend.m'),
 		('lip_side.r', 'lip_M', 'LOC_X', -1 , 'head_blend.m'),
@@ -2944,9 +2945,12 @@ class face_shape_keys:
 		('cheek_sqz', 'cheeks', 'LOC_Y', -1, 'head_blend.m'), 
 		('cheek_sqz.r', 'cheek_R', 'LOC_Y', -1, 'lip_blend.r'), 
 		('cheek_sqz.l', 'cheek_L', 'LOC_Y', -1, 'lip_blend.l'), 
-		('cheek_raise', 'cheeks', 'LOC_Y', 1, 'head_blend.m'), 
-		('cheek_raise.r', 'cheek_R', 'LOC_Y', 1, 'head_blend.r'), 
-		('cheek_raise.l', 'cheek_L', 'LOC_Y', 1, 'head_blend.l'),
+		#('cheek_raise', 'cheeks', 'LOC_Y', 1, 'head_blend.m'), 
+		#('cheek_raise.r', 'cheek_R', 'LOC_Y', 1, 'head_blend.r'),
+		#('cheek_raise.r', 'cheek_R', 'LOC_Y', 1, 'head_blend.r'),
+		('cheek_raise', '', '', '', 'head_blend.m'),
+		('cheek_raise.l', 'LIST', {'on':[('cheek_L', 'LOC_Y', 1), ('cheeks', 'LOC_Y', 1)], 'vtx_grp' : 'head_blend.l'}),
+		('cheek_raise.r', 'LIST', {'on':[('cheek_R', 'LOC_Y', 1), ('cheeks', 'LOC_Y', 1)], 'vtx_grp' : 'head_blend.r'}),
 		#BROWS
 		('brow_raiser', '', '', '', 'head_blend.m'),
 		('brow_raiser_out', '', '', '', 'head_blend.m'),
@@ -3428,127 +3432,207 @@ class face_shape_keys:
 		# ***** BODY
 		for data in self.face_shape_keys_data_list:
 			#('brow_lower_in.l',  'brow_in_L',  'LOC_Y',  -1,  'brow_in_blend.l')
-			sh_key_name = data[0]
-			cnt = data[1]
-			loc = data[2]
-			dat = data[3]
-			vtx_grp = data[4]
-			# create shape_key
-			if not sh_key_name in ob.data.shape_keys.key_blocks.keys():
-				shkey = ob.shape_key_add(name=sh_key_name, from_mix=True)
-				shkey.vertex_group = vtx_grp
-			else:
-				shkey = ob.data.shape_keys.key_blocks[sh_key_name]
-			# create driver
-			if cnt == '' or loc == '' or dat == '':
-				print(sh_key_name, '  **** not data') 
-				continue
+			#('cheek_raise.l', 'LIST', {'on':[('cheek_L', 'LOC_Y', 1), ('cheeks', 'LOC_Y', 1)], 'vtx_grp' : 'head_blend.l'}),
+			if data[1] == 'LIST':
+				sh_key_name = data[0]
+				on_list = data[2]['on']
+				off_list = data[2].get('off')
+				vtx_grp = data[2]['vtx_grp']
 				
-			# correct driver
-			try:
-				k_cnt = data[5]
-				k_loc = data[6]
-				if isinstance(data[7], str):
-					k_dat, abs_ = float(data[7].replace('abs', '')), 1
+				print('*'*100)
+				print(sh_key_name)
+				print(on_list)
+				print(off_list)
+				print(vtx_grp)
+				
+				# make expression
+				expression = ''
+				on_var = 'max%s' % str(tuple(['abs(%s)' % x[0] for x in on_list])).replace('\'','')
+				
+				on_condition = '('
+				for i,key in enumerate(on_list):
+					if key[2]>0:
+						if i==0:
+							on_condition = '%s %s>=0' % (on_condition, key[0])
+						else:
+							on_condition = '%s and %s>=0' % (on_condition, key[0])
+					if key[2]<0:
+						if i==0:
+							on_condition = '%s %s<=0' % (on_condition, key[0])
+						else:
+							on_condition = '%s and %s<=0' % (on_condition, key[0])
+				on_condition = '%s)' % on_condition
+				
+				if not off_list:
+					expression = '%s if %s else 0.0' % (on_var, on_condition)
 				else:
-					k_dat, abs_ = data[7], 0
-				action = data[8]
-			
-			except:
-				# old construction
+					# get off_var
+					off_var = ''
+					pass
+				
+				# create shape_key
+				if not sh_key_name in ob.data.shape_keys.key_blocks.keys():
+					shkey = ob.shape_key_add(name=sh_key_name, from_mix=True)
+					shkey.vertex_group = vtx_grp
+				else:
+					shkey = ob.data.shape_keys.key_blocks[sh_key_name]
+				
+				# make Driver
 				f_curve = ob.data.shape_keys.key_blocks[sh_key_name].driver_add('value')
 				drv = f_curve.driver
 				drv.type = 'SCRIPTED'
 				drv.show_debug_info = True
-				if dat<0:
-					drv.expression = 'abs(var) if var<0 else 0.0'
-				else:
-					drv.expression = 'var if var>0 else 0.0'
-				'''
-				point = f_curve.keyframe_points.insert(0,0)
-				point.interpolation = 'LINEAR'
-				point = f_curve.keyframe_points.insert(dat,1)
-				point.interpolation = 'LINEAR'
-				'''
-				var = drv.variables.new()
-				var.name = 'var'
-				var.type = 'TRANSFORMS'
-
-				targ = var.targets[0]
-				targ.id = rig_obj
-				targ.transform_type = loc
-				targ.bone_target = cnt
-				targ.transform_space = 'LOCAL_SPACE'
-
-				fmod = f_curve.modifiers[0]
-				f_curve.modifiers.remove(fmod)
+				drv.expression = expression
 				
-			else:
-				# correct construction
-				f_curve = ob.data.shape_keys.key_blocks[sh_key_name].driver_add('value')
-				drv = f_curve.driver
-				drv.type = 'SCRIPTED'
-				drv.show_debug_info = True
-				'''
-				point = f_curve.keyframe_points.insert(0,0)
-				point.interpolation = 'LINEAR'
-				point = f_curve.keyframe_points.insert(dat,1)
-				point.interpolation = 'LINEAR'
-				'''
-				# var 1
-				var = drv.variables.new()
-				var.name = 'var'
-				var.type = 'TRANSFORMS'
+				# add vars
+				for key in on_list:
+					var = drv.variables.new()
+					var.name = key[0]
+					var.type = 'TRANSFORMS'
 
-				targ = var.targets[0]
-				targ.id = rig_obj
-				targ.transform_type = loc
-				targ.bone_target = cnt
-				targ.transform_space = 'LOCAL_SPACE'
-				
-				# correct var
-				var = drv.variables.new()
-				var.name = 'correct'
-				var.type = 'TRANSFORMS'
+					targ = var.targets[0]
+					targ.id = rig_obj
+					targ.transform_type = key[1]
+					targ.bone_target = key[0]
+					targ.transform_space = 'LOCAL_SPACE'
+				if off_list:
+					for key in off_list:
+						var = drv.variables.new()
+						var.name = key[0]
+						var.type = 'TRANSFORMS'
 
-				targ = var.targets[0]
-				targ.id = rig_obj
-				targ.transform_type = k_loc
-				targ.bone_target = k_cnt
-				targ.transform_space = 'LOCAL_SPACE'
-				
-				# expression (var * abs(k*2.5) if  abs(k) < 0.4 else var)
-				# var * abs(correct*2.5) if var>0 and correct<=0 and abs(correct)<abs(-0.4) else 1.0 if var>0 and abs(correct)>=abs(-0.4) else 0.0
-				#var * abs(correct*2.5) if abs(correct)<abs(-0.4) else var if var>=0 else 0.0
-				if action == 'on':
-					mn = 1/abs(k_dat)
-					if dat<0 and k_dat<0:#'var * abs(correct*%s) if  abs(correct) < %s else var' % (str(mn), str(abs(k_dat)))
-						drv.expression = 'abs(var) * abs(correct*%s) if abs(correct)<abs(%s) and correct<=0 else var if var<=0 else 0.0' % (str(mn), str(k_dat))
-					elif dat<0 and k_dat>0:
-						drv.expression = 'abs(var) * abs(correct*%s) if abs(correct)<abs(%s) and correct>=0 else var if var<=0 else 0.0' % (str(mn), str(k_dat))
-					elif dat>0 and k_dat<0:
-						drv.expression = 'var * abs(correct*%s) if abs(correct)<abs(%s) and correct<=0 else var if var>=0 else 0.0' % (str(mn), str(k_dat))
-					elif dat>0 and k_dat>0:
-						drv.expression = 'var * abs(correct*%s) if abs(correct)<abs(%s) and correct>=0 else var if var>=0 else 0.0' % (str(mn), str(k_dat))
-				elif action == 'off':
-					# k_dat 1 or -1
-					if abs_:
-						if dat<0 and k_dat>0:
-							drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var<=0 else 0.0' % str(k_dat)
-						elif dat>0 and k_dat>0:
-							drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var>=0 else 0.0' % str(k_dat)
-					else:
-						if dat<0 and k_dat<0: #'var *(1 - abs(correct/%s))' % str(k_dat)
-							drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var<0 and correct<=0 else abs(var) if var<0 and correct>0 else 0.0' % str(k_dat)
-						elif dat<0 and k_dat>0:
-							drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var<0 and correct>=0 else abs(var) if var<0 and correct<0 else 0.0' % str(k_dat)
-						elif dat>0 and k_dat<0:
-							drv.expression = 'var *(1 - abs(correct/%s)) if var>0 and correct<=0 else var if var>0 and correct>0 else 0.0' % str(k_dat)
-						elif dat>0 and k_dat>0:
-							drv.expression = 'var *(1 - abs(correct/%s)) if var>0 and correct>=0 else var if var>0 and correct<0 else 0.0' % str(k_dat)
+						targ = var.targets[0]
+						targ.id = rig_obj
+						targ.transform_type = key[1]
+						targ.bone_target = key[0]
+						targ.transform_space = 'LOCAL_SPACE'
+						
 				# remove modifiers
 				fmod = f_curve.modifiers[0]
 				f_curve.modifiers.remove(fmod)
+				
+			else:
+				sh_key_name = data[0]
+				cnt = data[1]
+				loc = data[2]
+				dat = data[3]
+				vtx_grp = data[4]
+				# create shape_key
+				if not sh_key_name in ob.data.shape_keys.key_blocks.keys():
+					shkey = ob.shape_key_add(name=sh_key_name, from_mix=True)
+					shkey.vertex_group = vtx_grp
+				else:
+					shkey = ob.data.shape_keys.key_blocks[sh_key_name]
+				# create driver
+				if cnt == '' or loc == '' or dat == '':
+					print(sh_key_name, '  **** not data') 
+					continue
+					
+				# correct driver
+				try:
+					k_cnt = data[5]
+					k_loc = data[6]
+					if isinstance(data[7], str):
+						k_dat, abs_ = float(data[7].replace('abs', '')), 1
+					else:
+						k_dat, abs_ = data[7], 0
+					action = data[8]
+				
+				except:
+					# old construction
+					f_curve = ob.data.shape_keys.key_blocks[sh_key_name].driver_add('value')
+					drv = f_curve.driver
+					drv.type = 'SCRIPTED'
+					drv.show_debug_info = True
+					if dat<0:
+						drv.expression = 'abs(var) if var<0 else 0.0'
+					else:
+						drv.expression = 'var if var>0 else 0.0'
+					'''
+					point = f_curve.keyframe_points.insert(0,0)
+					point.interpolation = 'LINEAR'
+					point = f_curve.keyframe_points.insert(dat,1)
+					point.interpolation = 'LINEAR'
+					'''
+					var = drv.variables.new()
+					var.name = 'var'
+					var.type = 'TRANSFORMS'
+
+					targ = var.targets[0]
+					targ.id = rig_obj
+					targ.transform_type = loc
+					targ.bone_target = cnt
+					targ.transform_space = 'LOCAL_SPACE'
+
+					fmod = f_curve.modifiers[0]
+					f_curve.modifiers.remove(fmod)
+					
+				else:
+					# correct construction
+					f_curve = ob.data.shape_keys.key_blocks[sh_key_name].driver_add('value')
+					drv = f_curve.driver
+					drv.type = 'SCRIPTED'
+					drv.show_debug_info = True
+					'''
+					point = f_curve.keyframe_points.insert(0,0)
+					point.interpolation = 'LINEAR'
+					point = f_curve.keyframe_points.insert(dat,1)
+					point.interpolation = 'LINEAR'
+					'''
+					# var 1
+					var = drv.variables.new()
+					var.name = 'var'
+					var.type = 'TRANSFORMS'
+
+					targ = var.targets[0]
+					targ.id = rig_obj
+					targ.transform_type = loc
+					targ.bone_target = cnt
+					targ.transform_space = 'LOCAL_SPACE'
+					
+					# correct var
+					var = drv.variables.new()
+					var.name = 'correct'
+					var.type = 'TRANSFORMS'
+
+					targ = var.targets[0]
+					targ.id = rig_obj
+					targ.transform_type = k_loc
+					targ.bone_target = k_cnt
+					targ.transform_space = 'LOCAL_SPACE'
+					
+					# expression (var * abs(k*2.5) if  abs(k) < 0.4 else var)
+					# var * abs(correct*2.5) if var>0 and correct<=0 and abs(correct)<abs(-0.4) else 1.0 if var>0 and abs(correct)>=abs(-0.4) else 0.0
+					#var * abs(correct*2.5) if abs(correct)<abs(-0.4) else var if var>=0 else 0.0
+					if action == 'on':
+						mn = 1/abs(k_dat)
+						if dat<0 and k_dat<0:#'var * abs(correct*%s) if  abs(correct) < %s else var' % (str(mn), str(abs(k_dat)))
+							drv.expression = 'abs(var) * abs(correct*%s) if abs(correct)<abs(%s) and correct<=0 else var if var<=0 else 0.0' % (str(mn), str(k_dat))
+						elif dat<0 and k_dat>0:
+							drv.expression = 'abs(var) * abs(correct*%s) if abs(correct)<abs(%s) and correct>=0 else var if var<=0 else 0.0' % (str(mn), str(k_dat))
+						elif dat>0 and k_dat<0:
+							drv.expression = 'var * abs(correct*%s) if abs(correct)<abs(%s) and correct<=0 else var if var>=0 else 0.0' % (str(mn), str(k_dat))
+						elif dat>0 and k_dat>0:
+							drv.expression = 'var * abs(correct*%s) if abs(correct)<abs(%s) and correct>=0 else var if var>=0 else 0.0' % (str(mn), str(k_dat))
+					elif action == 'off':
+						# k_dat 1 or -1
+						if abs_:
+							if dat<0 and k_dat>0:
+								drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var<=0 else 0.0' % str(k_dat)
+							elif dat>0 and k_dat>0:
+								drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var>=0 else 0.0' % str(k_dat)
+						else:
+							if dat<0 and k_dat<0: #'var *(1 - abs(correct/%s))' % str(k_dat)
+								drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var<0 and correct<=0 else abs(var) if var<0 and correct>0 else 0.0' % str(k_dat)
+							elif dat<0 and k_dat>0:
+								drv.expression = 'abs(var) *(1 - abs(correct/%s)) if var<0 and correct>=0 else abs(var) if var<0 and correct<0 else 0.0' % str(k_dat)
+							elif dat>0 and k_dat<0:
+								drv.expression = 'var *(1 - abs(correct/%s)) if var>0 and correct<=0 else var if var>0 and correct>0 else 0.0' % str(k_dat)
+							elif dat>0 and k_dat>0:
+								drv.expression = 'var *(1 - abs(correct/%s)) if var>0 and correct>=0 else var if var>0 and correct<0 else 0.0' % str(k_dat)
+					# remove modifiers
+					fmod = f_curve.modifiers[0]
+					f_curve.modifiers.remove(fmod)
 				
 		# ****** ATHER GEO
 		for data in self.ather_shape_keys_data_list:
