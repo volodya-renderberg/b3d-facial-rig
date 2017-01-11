@@ -183,10 +183,18 @@ class face_armature:
 		('FRTMP_pupil_L', 'LINE_DUBBLE', ''),
 		('FRTMP_eye_global_R', 'CIRCLE', ''),
 		('FRTMP_eye_global_L', 'CIRCLE', ''),
+		#NEW Face Panel
+		('FRTMP_chin_wrinkle', 'LINE', ''),
+		('FRTMP_lid_squint_L', 'LINE', ''),
+		('FRTMP_lid_squint_R', 'LINE', ''),
+		('FRTMP_open_smile_L', 'LINE', ''),
+		('FRTMP_open_smile_R', 'LINE', ''),
+		('FRTMP_dimpler_L', 'LINE', ''),
+		('FRTMP_dimpler_R', 'LINE', ''),
 		# side panel
 		('FRTMP_lips', 'FOUR_SIDE2', ''),
 		('FRTMP_cheeks', 'FOUR_SIDE2', ''),
-		('FRTMP_jaw_back_fwd', 'LINE_DUBBLE', ''),
+		#('FRTMP_jaw_back_fwd', 'LINE_DUBBLE', ''),
 		('FRTMP_funnel', 'LINE', ''),
 		#('FRTMP_lip_up_raise', 'LINE', ''),
 		('FRTMP_lip_up_raise', 'LINE_DUBBLE', ''),
@@ -199,6 +207,12 @@ class face_armature:
 		('FRTMP_lips_close', 'LINE', ''),
 		('FRTMP_lip_up_roll', 'LINE_DUBBLE', ''),
 		('FRTMP_lip_low_roll', 'LINE_DUBBLE', ''),
+		#NEW side panel
+		('FRTMP_back_fwd_chew', 'THREE_SIDE', ''),
+		('FRTMP_mouth_stretch', 'LINE', ''),
+		('FRTMP_lid_squint', 'LINE', ''),
+		('FRTMP_open_smile', 'LINE', ''),
+		('FRTMP_dimpler', 'LINE', ''),
 		]
 		
 		# mesh_passport - bones to skin
@@ -370,6 +384,8 @@ class face_armature:
 		rig_arm.jaw_fwd = 0.03
 		bpy.types.Armature.jaw_back =  bpy.props.FloatProperty(name = "jaw_back", default = 1.0,min = 0.0, max = 100)
 		rig_arm.jaw_back = 0.015
+		bpy.types.Armature.jaw_chew =  bpy.props.FloatProperty(name = "jaw_chew", default = 1.0,min = 0.0, max = 100)
+		rig_arm.jaw_chew = 0.01
 		
 		# ------------ create all cnt ------------------
 		self.create_all_cnt(bpy.context)
@@ -422,6 +438,18 @@ class face_armature:
 				middle = (x,y,z)
 				y_fwd_tail = (tail[1] - y)/2.0 + y
 				fwd_tail = (x, y_fwd_tail, z)
+				chew_tail = (head[0], head[1], head[2] - abs(y_fwd_tail))
+				
+				# Jaw Chew
+				bone = rig_arm.edit_bones.new('Chew')
+				bone.layers = layer
+				#bone.head = middle
+				bone.head = head
+				bone.tail = chew_tail
+				bone.roll = 0.0000
+				bone.use_connect = False
+				bone.use_deform = False
+				bone.parent = rig_arm.edit_bones['DEF-head']
 				
 				# Jaw Back-Forward
 				bone = rig_arm.edit_bones.new('FWD_jaw')
@@ -432,7 +460,7 @@ class face_armature:
 				bone.roll = 0.0000
 				bone.use_connect = False
 				bone.use_deform = False
-				bone.parent = rig_arm.edit_bones['DEF-head']
+				bone.parent = rig_arm.edit_bones['Chew']
 				'''
 				# Jaw Incline
 				bone = rig_arm.edit_bones.new('INCL_jaw')
@@ -876,6 +904,34 @@ class face_armature:
 		incline_name = 'jaw_incline'
 		fwd_name = 'jaw_fwd'
 		back_name = 'jaw_back'
+		chew_name = 'jaw_chew'
+		# -- affect to jaw - Chew
+		# --- f curve
+		fcurve = rig_obj.pose.bones['Chew'].driver_add('location', 1)
+		drv = fcurve.driver
+		drv.type = 'SCRIPTED'
+		drv.expression = 'abs(%s) * %s' % (cnt_name, chew_name)
+		drv.show_debug_info = True
+		# --- var
+		var = drv.variables.new()
+		var.name = cnt_name
+		var.type = 'TRANSFORMS'
+		# --- targ
+		targ = var.targets[0]
+		targ.id = rig_obj
+		targ.transform_type = 'LOC_Y'
+		targ.bone_target = 'back_fwd_chew'
+		targ.transform_space = 'LOCAL_SPACE'
+		# --- var2
+		var2 = drv.variables.new()
+		var2.name = chew_name
+		var2.type = 'SINGLE_PROP'
+		# --- var2.targ
+		targ = var2.targets[0]
+		targ.id_type = 'ARMATURE'
+		targ.id = rig_arm
+		targ.data_path = '["%s"]' % chew_name
+		
 		# -- affect to jaw - FWD JAW
 		# --- f curve
 		fcurve = rig_obj.pose.bones['FWD_jaw'].driver_add('location', 1)
@@ -890,8 +946,8 @@ class face_armature:
 		# --- targ
 		targ = var.targets[0]
 		targ.id = rig_obj
-		targ.transform_type = 'LOC_Y'
-		targ.bone_target = 'jaw_back_fwd'
+		targ.transform_type = 'LOC_X'
+		targ.bone_target = 'back_fwd_chew'
 		targ.transform_space = 'LOCAL_SPACE'
 		# --- var2
 		var2 = drv.variables.new()
@@ -2808,8 +2864,9 @@ class face_shape_keys:
 		]
 		
 		self.face_shape_keys_data_list = [
-		('jaw_fwd', 'jaw_back_fwd', 'LOC_Y', 1, 'head_blend.m'),
-		('jaw_back', 'jaw_back_fwd', 'LOC_Y', -1, 'head_blend.m'),
+		('jaw_fwd', 'back_fwd_chew', 'LOC_X', 1, 'head_blend.m'),
+		('jaw_back', 'back_fwd_chew', 'LOC_X', -1, 'head_blend.m'),
+		('jaw_chew', 'back_fwd_chew', 'LOC_Y', 1, 'head_blend.m'),
 		('lip_down', 'lip_M', 'LOC_Y', -1, 'head_blend.m'),
 		('lip_raise', 'lip_M', 'LOC_Y', 1 , 'head_blend.m'),
 		('lip_side.r', 'lip_M', 'LOC_X', -1 , 'head_blend.m'),
@@ -3131,7 +3188,7 @@ class face_shape_keys:
 		# --- update driver affects
 		bpy.ops.anim.update_animated_transform_constraints(use_convert_to_radians=True)
 					
-		# JAW ** CREATE SHAPE_KEYS (FWD, BACK)
+		# JAW ** CREATE SHAPE_KEYS (FWD, BACK) ***********************
 		poses_ = {'jaw_fwd': 1, 'jaw_back': -1}
 		for key in poses_:
 			# -- -- new shape_key
@@ -3139,7 +3196,7 @@ class face_shape_keys:
 			shkey.vertex_group = vtx_groups['head_blend.m'].name
 
 			# -- jaw control to pose
-			rig_obj.pose.bones['jaw_back_fwd'].location[1] = poses_[key]
+			rig_obj.pose.bones['back_fwd_chew'].location[0] = poses_[key]
 			# --- update driver affects
 			bpy.ops.anim.update_animated_transform_constraints(use_convert_to_radians=True)
 
@@ -3151,9 +3208,34 @@ class face_shape_keys:
 				shkey.data[vtx.index].co = me.vertices[vtx.index].co
 
 			# remove me
-			bpy.data.meshes.remove(me) 
+			bpy.data.meshes.remove(me)
+			
+		# JAW ** CHEW ***********************
+		# -- -- new shape_key
+		shkey = ob.shape_key_add(name='jaw_chew', from_mix=True)
+		shkey.vertex_group = vtx_groups['head_blend.m'].name
 
-		# JAW ** remove 'FR_jaw' from armature
+		# -- jaw control to pose
+		rig_obj.pose.bones['back_fwd_chew'].location[0] = 0
+		rig_obj.pose.bones['back_fwd_chew'].location[1] = 1
+		# --- update driver affects
+		bpy.ops.anim.update_animated_transform_constraints(use_convert_to_radians=True)
+
+		# -- make mesh pose
+		me = ob.to_mesh(scene=bpy.context.scene, apply_modifiers=True, settings='PREVIEW')
+
+		# Copy Data
+		for vtx in ob.data.vertices:
+			shkey.data[vtx.index].co = me.vertices[vtx.index].co
+
+		# remove me
+		bpy.data.meshes.remove(me)
+		# -- jaw control to base position
+		rig_obj.pose.bones['back_fwd_chew'].location[1] = 0
+		# --- update driver affects
+		bpy.ops.anim.update_animated_transform_constraints(use_convert_to_radians=True)
+
+		# JAW ** remove 'FR_jaw' from armature ***********************
 		ob.select = True
 		scene.objects.active = ob
 		bpy.ops.object.mode_set(mode='EDIT')
@@ -5238,8 +5320,8 @@ class face_shape_keys:
 		#9
 		#SIDE
 		if not self.central_side_shape_keys.get(target):
-			#return(True, 'Ok!')
-			return(False, 'Not Sides!')
+			return(True, 'Ok!')
+			#return(False, 'Not Sides!')
 		
 		for side_name in self.central_side_shape_keys[target]:
 			#10
