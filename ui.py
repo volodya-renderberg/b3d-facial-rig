@@ -277,6 +277,11 @@ class FACIALRIG_import_export(bpy.types.Panel):
 		col.operator("export.all_vertex_groups", icon='GROUP_VERTEX', text = 'Export All Vertex Group')
 		col.operator("import.all_vertex_groups", icon='GROUP_VERTEX', text = 'Import All Vertex Group')
 		
+		#eye_limits.import_export
+		col = layout.column(align = 1)
+		col.operator("eye_limits.import_export", text = 'Export Eye Limits').action = 'export'
+		col.operator("eye_limits.import_export", text = 'Import Eye Limits').action = 'import'
+		
 
 class FACE_rig_help(bpy.types.Operator):
 	bl_idname = "face_rig.help"
@@ -566,6 +571,29 @@ class EYE_limits(bpy.types.Operator):
 			eye_limits().apply_limits()
 		return{'FINISHED'}
 	
+class EYE_limits_import_export(bpy.types.Operator):
+	bl_idname = "eye_limits.import_export"
+	bl_label = "You Are Sure?"
+	action = bpy.props.StringProperty()
+	
+	def execute(self, context):
+		if self.action == 'export':
+			res, mess = eye_limits().export_limits()
+			if not res:
+				self.report({'WARNING'}, mess)
+			else:
+				self.report({'INFO'}, mess)
+		else:
+			res, mess = eye_limits().import_limits()
+			if not res:
+				self.report({'WARNING'}, mess)
+			else:
+				self.report({'INFO'}, mess)
+		return{'FINISHED'}
+	
+	def invoke(self, context, event):
+		return context.window_manager.invoke_props_dialog(self)
+	
 class INSERT_inbetween(bpy.types.Operator):
 	bl_idname = "insert.inbetween"
 	bl_label = "Insert Inbetween"
@@ -608,7 +636,7 @@ class SHAPE_keys_insert_inbetween_panel(bpy.types.Operator):
 	bl_label = "Insert Inbetween"
 	
 	##### get list shape keys
-	fshk = face_shape_keys()
+	fshk = G.face_shape_keys
 	central_sh_keys = fshk.central_sh_keys#['jaw_open_C', 'jaw_fwd', 'jaw_back', 'lip_down', 'lip_raise', 'lip_funnel', 'lip_close']
 	list_sh_keys = []
 	try:
@@ -912,6 +940,7 @@ def register():
 	bpy.utils.register_class(SHAPE_keys_edit_brows_shape_keys_open_panel)
 	bpy.utils.register_class(SHAPE_keys_brows_edit_shape_keys)
 	bpy.utils.register_class(EYE_limits)
+	bpy.utils.register_class(EYE_limits_import_export)
 	bpy.utils.register_class(EDIT_SHAPE_keys)
 	bpy.utils.register_class(INSERT_inbetween)
 	bpy.utils.register_class(SHAPE_keys_insert_inbetween_panel)
@@ -955,7 +984,8 @@ def unregister():
 	bpy.utils.unregister_class(SHAPE_keys_single_vertex_groups_open_panel)
 	bpy.utils.unregister_class(SHAPE_keys_edit_brows_shape_keys_open_panel)
 	bpy.utils.unregister_class(SHAPE_keys_brows_edit_shape_keys)
-	bpy.utils.unregister_class(EYE_limits)	
+	bpy.utils.unregister_class(EYE_limits)
+	bpy.utils.unregister_class(EYE_limits_import_export)
 	bpy.utils.unregister_class(EDIT_SHAPE_keys)	
 	bpy.utils.unregister_class(INSERT_inbetween)
 	bpy.utils.unregister_class(SHAPE_keys_insert_inbetween_panel)

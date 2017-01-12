@@ -5977,6 +5977,13 @@ class face_shape_keys:
 				return(os.path.normpath(os.path.join(activity_path, '.all_vertex_groups_data.json')))
 			else:
 				return(os.path.normpath(os.path.join(os.path.expanduser('~'), '.all_vertex_groups_data.json')))
+		elif data_type == 'EYE_LIMITS':
+			if lineyka:
+				return(os.path.normpath(os.path.join(activity_path, '.eye_limits.json')))
+			else:
+				return(os.path.normpath(os.path.join(os.path.expanduser('~'), '.eye_limits.json')))
+		else:
+			return(False)
 	
 	def export_single_vertex_data(self, context):
 		pass
@@ -6362,7 +6369,7 @@ class eye_limits:
 		try:
 			self.l_cns = self.eye_bone_l.constraints[l_cns_name]
 			self.l_cns.use_limit_x = False
-			self.l_cns.use_limit_z = False		
+			self.l_cns.use_limit_z = False
 		except:
 			self.l_cns = self.eye_bone_l.constraints.new('LIMIT_ROTATION')
 			self.l_cns.name = l_cns_name
@@ -6516,3 +6523,54 @@ class eye_limits:
 		self.l_cns.use_limit_z = True
 		
 		#del(self)
+		
+	def export_limits(self):
+		# get save path
+		path = face_shape_keys().get_data_save_path('EYE_LIMITS')
+		if not path:
+			return(False, ('not Path!'))
+		
+		#data
+		data = {}
+		#r
+		data['max_x.r'] = self.r_cns.max_x
+		data['min_x.r'] = self.r_cns.min_x
+		data['max_z.r'] = self.r_cns.max_z
+		data['min_z.r'] = self.r_cns.min_z
+		#l
+		data['max_x.l'] = self.l_cns.max_x
+		data['min_x.l'] = self.l_cns.min_x
+		data['max_z.l'] = self.l_cns.max_z
+		data['min_z.l'] = self.l_cns.min_z
+		
+		jsn = json.dumps(data, sort_keys=True, indent=4)
+		data_fale = open(path, 'w')
+		data_fale.write(jsn)
+		data_fale.close()
+		return(True, ('eye_limits saved to: ' + path))
+			
+	
+	def import_limits(self):
+		# get save path
+		path = face_shape_keys().get_data_save_path('EYE_LIMITS')
+		if not path or not os.path.exists(path):
+			return(False, ('not Saved data!'))
+		
+		data_fale = open(path)
+		data = json.load(data_fale)
+		data_fale.close()
+		
+		#r
+		self.r_cns.max_x = data['max_x.r']
+		self.r_cns.min_x = data['min_x.r']
+		self.r_cns.max_z = data['max_z.r']
+		self.r_cns.min_z = data['min_z.r']
+		#l
+		self.l_cns.max_x = data['max_x.l']
+		self.l_cns.min_x = data['min_x.l']
+		self.l_cns.max_z = data['max_z.l']
+		self.l_cns.min_z = data['min_z.l']
+		
+		self.apply_limits()
+		
+		return(True, 'Ok!')
