@@ -2989,8 +2989,10 @@ class face_shape_keys:
 		('blink_up_lid.r',  'blink_R',  'LOC_X',  1,  'head_blend.r'),
 		('blink_up_lid.l',  'blink_L',  'LOC_X',  1,  'head_blend.l'),
 		('blink_low_lid',  '',  '',  '',  'head_blend.m'),
-		('blink_low_lid.r',  'blink_R',  'LOC_Y',  1,  'head_blend.r', 'cheek_R', 'LOC_Y', 1, 'off'),
-		('blink_low_lid.l',  'blink_L',  'LOC_Y',  1,  'head_blend.l', 'cheek_L', 'LOC_Y', 1, 'off'),
+		#('blink_low_lid.r',  'blink_R',  'LOC_Y',  1,  'head_blend.r', 'cheek_R', 'LOC_Y', 1, 'off'),
+		('blink_low_lid.r',  'LIST', {'on':[('blink_R', 'LOC_Y', 1)], 'off': [('cheek_R', 'LOC_Y', 1), ('lid_squint_R', 'LOC_Y', 1)], 'off_factor': 'max', 'vtx_grp' : 'head_blend.r'}),
+		#('blink_low_lid.l',  'blink_L',  'LOC_Y',  1,  'head_blend.l', 'cheek_L', 'LOC_Y', 1, 'off'),
+		('blink_low_lid.l',  'LIST', {'on':[('blink_L', 'LOC_Y', 1)], 'off': [('cheek_L', 'LOC_Y', 1), ('lid_squint_L', 'LOC_Y', 1)], 'off_factor': 'max', 'vtx_grp' : 'head_blend.l'}),
 		('goggle_up_lid',  '',  '',  '',  'head_blend.m'),
 		('goggle_up_lid.r',  'blink_R',  'LOC_X',  -1,  'head_blend.r'),
 		('goggle_up_lid.l',  'blink_L',  'LOC_X',  -1,  'head_blend.l'),
@@ -3470,7 +3472,7 @@ class face_shape_keys:
 				
 				# make expression
 				expression = ''
-				on_var = 'max%s' % str(tuple(['abs(%s)' % x[0] for x in on_list])).replace('\'','')
+				on_var = 'max%s' % str(tuple(['abs(%s)' % x[0] for x in on_list] + [0])).replace('\'','')
 				
 				on_condition = '('
 				for i,key in enumerate(on_list):
@@ -3491,7 +3493,7 @@ class face_shape_keys:
 				else:
 					# NEW
 					# -- get off_var
-					off_var = '(1 - %s%s)' % (off_factor, str(tuple(['abs(%s)' % x[0] for x in off_list])).replace('\'',''))
+					off_var = '(1 - %s%s)' % (off_factor, str(tuple(['abs(%s)' % x[0] for x in off_list] + [0])).replace('\'',''))
 					
 					# -- expression
 					expression = '%s*%s if %s else 0.0' % (on_var, off_var, on_condition)
