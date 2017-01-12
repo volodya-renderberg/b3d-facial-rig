@@ -92,8 +92,8 @@ class FACIALRIG_Help(bpy.types.Panel):
 
 		#layout.label("Mesh Passport")
 		col = layout.column(align=1)
-		col.operator("face_rig.help",icon = 'QUESTION', text = 'Manual').action = 'manual'
-		col.operator("face_rig.help",icon = 'QUESTION', text = 'Youtube(ru)').action = 'youtube_ru'
+		col.operator("face_rig.help",icon = 'QUESTION', text = 'Manual').path = 'https://sites.google.com/site/blenderfacialrig/user-manual'
+		col.operator("face_rig.help",icon = 'QUESTION', text = 'Youtube(ru)').path = 'https://www.youtube.com/playlist?list=PLaF5hl1yUd9UYmvyRC51C-C0TulaA2SnT'
 
 class FACIALRIG_MakeRig(bpy.types.Panel):
 	bl_idname = "face_rig.tools_panel"
@@ -226,10 +226,13 @@ class FACIALRIG_Shape_Keys_Sculpt(bpy.types.Panel):
 	def draw(self, context):
 		layout = self.layout
 		layout.label("Sculpt Shape Keys:")
-		col_shk_list = layout.column(align = 1)
+		col = layout.column(align = 1)
 		list_shape_keys = get_data_class().get_list_shape_keys(context, only_origin = 0)
 		for key in list_shape_keys:
-			col_shk_list.operator("shape_key.edit", icon='SHAPEKEY_DATA', text = key).target = key			
+			row = col.row(align = True)
+			row.operator("shape_key.edit", icon='SHAPEKEY_DATA', text = key).target = key
+			if key in G.face_shape_keys.helps_list and G.face_shape_keys.helps_list[key]:
+				row.operator('face_rig.help', icon = 'QUESTION', text = '').path = G.face_shape_keys.helps_list[key]
 		
 		
 class FACIALRIG_import_export(bpy.types.Panel):
@@ -278,16 +281,19 @@ class FACIALRIG_import_export(bpy.types.Panel):
 class FACE_rig_help(bpy.types.Operator):
 	bl_idname = "face_rig.help"
 	bl_label = "Help"
-	action = bpy.props.StringProperty()
+	path = bpy.props.StringProperty()
 
 	def execute(self, context):
-		print('***** help')
+		'''
 		if self.action == 'manual':
 			webbrowser.open_new_tab('https://sites.google.com/site/blenderfacialrig/user-manual')
 		elif self.action == 'youtube_ru':
 			webbrowser.open_new_tab('https://www.youtube.com/playlist?list=PLaF5hl1yUd9UYmvyRC51C-C0TulaA2SnT')
+		'''
+		webbrowser.open_new_tab(self.path)
 		return{'FINISHED'}
-				
+	
+
 class TMP_armature_create(bpy.types.Operator):
 	bl_idname = "face_rig.tmp_create"
 	bl_label = "Are You Sure?"

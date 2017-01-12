@@ -3040,6 +3040,17 @@ class face_shape_keys:
 		'dimpler':('dimpler.r', 'dimpler.l'),
 		}
 		
+		self.helps_list = {
+		'brow_gatherer':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/brow_gatherer',
+		'brow_raiser':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/brow_raiser',
+		'jaw_chew':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/jaw_chew',
+		'open_smile':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/open_smile',
+		'dimpler':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/dimpler',
+		'lid_squint':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lid_squint',
+		'chin_wrinkle':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/chin_wrinkle',
+		'mouth_stretch':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/mouth_stretch',
+		}
+		
 		self.shape_keys_vtx_grp = [
 		('autolid_low', 'head_blend.m'),
 		('autolid_up', 'head_blend.m'),
