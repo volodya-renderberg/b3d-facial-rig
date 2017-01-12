@@ -2854,7 +2854,7 @@ class face_shape_keys:
 		
 		self.label_tmp_bones = ['vtx_lip_grp_set', 'vtx_brow_in_set', 'vtx_brow_out_set', 'vtx_nose_set']
 		
-		self.central_sh_keys = ['jaw_open_C', 'jaw_side_R', 'lip_side.r', 'jaw_fwd', 'jaw_back', 'lip_down', 'lip_raise', 'lip_funnel', 'lip_close']
+		self.central_sh_keys = ['jaw_open_C', 'jaw_side_R', 'lip_side.r', 'jaw_fwd', 'jaw_back', 'jaw_chew', 'chin_wrinkle', 'mouth_stretch', 'lip_down', 'lip_raise', 'lip_funnel', 'lip_close']
 		
 		self.ather_shape_keys_data_list = [
 		('eye_r', 'pupil_extension_r', 'pupil_R', 'LOC_Y', 1, ''),
@@ -2872,9 +2872,15 @@ class face_shape_keys:
 		('lip_raise', 'lip_M', 'LOC_Y', 1 , 'head_blend.m'),
 		('lip_side.r', 'lip_M', 'LOC_X', -1 , 'head_blend.m'),
 		('lip_side.l', 'lip_M', 'LOC_X',  1 , 'head_blend.m'),
-		('lip_smile', 'lips', 'LOC_Y', 1, 'head_blend.m'), 
-		('lip_smile.r', 'lip_R', 'LOC_Y', 1, 'lip_blend.r'), 
-		('lip_smile.l', 'lip_L', 'LOC_Y', 1, 'lip_blend.l'), 
+		#lip_smile
+		('lip_smile', 'lips', 'LOC_Y', 1, 'head_blend.m', 'open_smile', 'LOC_Y', 1, 'off'),
+		('lip_smile.r', 'lip_R', 'LOC_Y', 1, 'lip_blend.r', 'open_smile_R', 'LOC_Y', 1, 'off'),
+		('lip_smile.l', 'lip_L', 'LOC_Y', 1, 'lip_blend.l', 'open_smile_L', 'LOC_Y', 1, 'off'),
+		#open_smile
+		('open_smile', 'open_smile', 'LOC_Y', 1, 'head_blend.m', 'lips', 'LOC_Y', -1, 'off'), 
+		('open_smile.r', 'open_smile_R', 'LOC_Y', 1, 'lip_blend.r', 'lip_R', 'LOC_Y', -1, 'off'),
+		('open_smile.l', 'open_smile_L', 'LOC_Y', 1, 'lip_blend.l', 'lip_L', 'LOC_Y', -1, 'off'),
+		#
 		('lip_frown', 'lips', 'LOC_Y', -1, 'head_blend.m'), 
 		('lip_frown.r', 'lip_R', 'LOC_Y', -1, 'lip_blend.r'), 
 		('lip_frown.l', 'lip_L', 'LOC_Y', -1, 'lip_blend.l'), 
@@ -2913,19 +2919,21 @@ class face_shape_keys:
 		('lip_close', 'lips_close', 'LOC_Y', 1, 'head_blend.m', 'jaw.cnt', 'LOC_Y', -1, 'on'), 
 		('lip_pinch', 'lips_pinch', 'LOC_Y', 1, 'head_blend.m', 'jaw.cnt', 'LOC_Y', -0.4, 'on'), 
 		('lip_pinch.r', 'lips_pinch_R', 'LOC_Y', 1, 'lip_blend.r', 'jaw.cnt', 'LOC_Y', -0.4, 'on'), 
-		('lip_pinch.l', 'lips_pinch_L', 'LOC_Y', 1, 'lip_blend.l', 'jaw.cnt', 'LOC_Y', -0.4, 'on'), 
-		#('lip_upper_sqz', 'lip_up_sqz', 'LOC_Y', 1, 'head_blend.m'), 
+		('lip_pinch.l', 'lips_pinch_L', 'LOC_Y', 1, 'lip_blend.l', 'jaw.cnt', 'LOC_Y', -0.4, 'on'),
+		('mouth_stretch', 'mouth_stretch', 'LOC_Y', 1, 'head_blend.m', 'jaw.cnt', 'LOC_Y', -1, 'on'),
+		#dimpler
+		('dimpler', 'dimpler', 'LOC_Y', 1, 'head_blend.m'), 
+		('dimpler.r', 'dimpler_R', 'LOC_Y', 1, 'lip_blend.r'), 
+		('dimpler.l', 'dimpler_L', 'LOC_Y', 1, 'lip_blend.l'),
+		#lip_upper_sqz
 		('lip_upper_sqz', 'lip_up_raise', 'LOC_Y', -1, 'head_blend.m'), 
-		#('lip_upper_sqz.r', 'lip_up_sqz_R', 'LOC_Y', 1, 'lip_blend.r'), 
 		('lip_upper_sqz.r', 'lip_up_raise_R', 'LOC_Y', -1, 'lip_blend.r'), 
-		#('lip_upper_sqz.l', 'lip_up_sqz_L', 'LOC_Y', 1, 'lip_blend.l'), 
 		('lip_upper_sqz.l', 'lip_up_raise_L', 'LOC_Y', -1, 'lip_blend.l'), 
-		#('lip_lower_sqz', 'lip_low_sqz', 'LOC_Y', 1, 'head_blend.m'), 
+		#lip_lower_sqz
 		('lip_lower_sqz', 'lip_low_depress', 'LOC_Y', -1, 'head_blend.m'), 
-		#('lip_lower_sqz.r', 'lip_low_sqz_R', 'LOC_Y', 1, 'lip_blend.r'), 
 		('lip_lower_sqz.r', 'lip_low_depress_R', 'LOC_Y', -1, 'lip_blend.r'), 
-		#('lip_lower_sqz.l', 'lip_low_sqz_L', 'LOC_Y', 1, 'lip_blend.l'), 
-		('lip_lower_sqz.l', 'lip_low_depress_L', 'LOC_Y', -1, 'lip_blend.l'), 
+		('lip_lower_sqz.l', 'lip_low_depress_L', 'LOC_Y', -1, 'lip_blend.l'),
+		#
 		('lip_funnel', 'funnel', 'LOC_Y', 1, 'head_blend.m'), 
 		('nose_sneer', 'nose', 'LOC_Y', 1, 'head_blend.m'), 
 		('nose_sneer.r', 'nose_R', 'LOC_Y', 1, 'nose_blend.r'), 
@@ -2951,6 +2959,9 @@ class face_shape_keys:
 		('cheek_raise', '', '', '', 'head_blend.m'),
 		('cheek_raise.l', 'LIST', {'on':[('cheek_L', 'LOC_Y', 1), ('cheeks', 'LOC_Y', 1)], 'vtx_grp' : 'head_blend.l'}),
 		('cheek_raise.r', 'LIST', {'on':[('cheek_R', 'LOC_Y', 1), ('cheeks', 'LOC_Y', 1)], 'vtx_grp' : 'head_blend.r'}),
+		('lid_squint', '', '', '', 'head_blend.m'),
+		('lid_squint.l', 'LIST', {'on':[('lid_squint_L', 'LOC_Y', 1), ('lid_squint', 'LOC_Y', 1)], 'off': [('cheek_L', 'LOC_Y', 1), ('cheeks', 'LOC_Y', 1)], 'off_factor': 'max', 'vtx_grp' : 'head_blend.l'}),
+		('lid_squint.r', 'LIST', {'on':[('lid_squint_R', 'LOC_Y', 1), ('lid_squint', 'LOC_Y', 1)], 'off': [('cheek_R', 'LOC_Y', 1), ('cheeks', 'LOC_Y', 1)], 'off_factor': 'max', 'vtx_grp' : 'head_blend.r'}),
 		#BROWS
 		('brow_raiser', '', '', '', 'head_blend.m'),
 		('brow_raiser_out', '', '', '', 'head_blend.m'),
@@ -2990,6 +3001,7 @@ class face_shape_keys:
 		
 		self.central_side_shape_keys = {
 		'lip_smile':('lip_smile.r', 'lip_smile.l'),
+		'open_smile':('open_smile.r', 'open_smile.l'),
 		'lip_frown':('lip_frown.r', 'lip_frown.l'),
 		'lip_stretch':('lip_stretch.r', 'lip_stretch.l'),
 		'lip_pucker':('lip_pucker.r', 'lip_pucker.l'),
@@ -3009,6 +3021,7 @@ class face_shape_keys:
 		'cheek_suck':('cheek_suck.r', 'cheek_suck.l'),
 		'cheek_sqz':('cheek_sqz.r', 'cheek_sqz.l'),
 		'cheek_raise':('cheek_raise.r', 'cheek_raise.l'),
+		'lid_squint':('lid_squint.r', 'lid_squint.l'),
 		'brow_gatherer':('brow_gatherer.r', 'brow_gatherer.l'),
 		'brow_raiser':('brow_raiser.r', 'brow_raiser.l'),
 		'brow_raiser_out':('brow_raiser_out.r', 'brow_raiser_out.l'),
@@ -3024,6 +3037,7 @@ class face_shape_keys:
 		'blink_low_lid':('blink_low_lid.r', 'blink_low_lid.l'),
 		'goggle_up_lid':('goggle_up_lid.r', 'goggle_up_lid.l'),
 		'goggle_low_lid':('goggle_low_lid.r', 'goggle_low_lid.l'),
+		'dimpler':('dimpler.r', 'dimpler.l'),
 		}
 		
 		self.shape_keys_vtx_grp = [
@@ -3432,18 +3446,16 @@ class face_shape_keys:
 		# ***** BODY
 		for data in self.face_shape_keys_data_list:
 			#('brow_lower_in.l',  'brow_in_L',  'LOC_Y',  -1,  'brow_in_blend.l')
-			#('cheek_raise.l', 'LIST', {'on':[('cheek_L', 'LOC_Y', 1), ('cheeks', 'LOC_Y', 1)], 'vtx_grp' : 'head_blend.l'}),
+			#('cheek_raise.l', 'LIST', {'on':[('cheek_L', 'LOC_Y', 1), ('cheeks', 'LOC_Y', 1)], 'vtx_grp' : 'head_blend.l', 'off_factor': 'sum'}),
+			# off_factor in ('sum', 'max')
 			if data[1] == 'LIST':
 				sh_key_name = data[0]
 				on_list = data[2]['on']
 				off_list = data[2].get('off')
 				vtx_grp = data[2]['vtx_grp']
-				
-				print('*'*100)
-				print(sh_key_name)
-				print(on_list)
-				print(off_list)
-				print(vtx_grp)
+				off_factor = data[2].get('off_factor')
+				if not off_factor:
+					off_factor = 'sum'
 				
 				# make expression
 				expression = ''
@@ -3466,9 +3478,69 @@ class face_shape_keys:
 				if not off_list:
 					expression = '%s if %s else 0.0' % (on_var, on_condition)
 				else:
-					# get off_var
-					off_var = ''
-					pass
+					# NEW
+					# -- get off_var
+					off_var = '(1 - %s%s)' % (off_factor, str(tuple(['abs(%s)' % x[0] for x in off_list])).replace('\'',''))
+					
+					# -- expression
+					expression = '%s*%s if %s else 0.0' % (on_var, off_var, on_condition)
+					
+					'''OLD
+					# -- get off_var
+					off_var = '(1 - %s%s)' % (off_factor, str(tuple(['abs(%s)' % x[0] for x in off_list])).replace('\'',''))
+					
+					# -- get off_condition
+					off_condition = '('
+					for i,key in enumerate(off_list):
+						if key[2]>0:
+							if i==0:
+								off_condition = '%s %s>=0' % (off_condition, key[0])
+							else:
+								off_condition = '%s and %s>=0' % (off_condition, key[0])
+						if key[2]<0:
+							if i==0:
+								off_condition = '%s %s<=0' % (off_condition, key[0])
+							else:
+								off_condition = '%s and %s<=0' % (off_condition, key[0])
+					off_condition = '%s)' % off_condition
+					# -- expression
+					expression = '%s*%s if %s and %s else ' % (on_var, off_var, on_condition, off_condition)
+					
+					for KEY in off_list:
+						# -- get off_var
+						off_var = '(1 - %s%s)' % (off_factor, str(tuple(['abs(%s)' % x[0] if x[0] != KEY[0] else '0' for x in off_list])).replace('\'',''))
+						# -- get off_condition
+						off_condition = '('
+						for i,key in enumerate(off_list):
+							if key[0] != KEY[0]:
+								if key[2]>0:
+									if i==0:
+										off_condition = '%s %s>=0' % (off_condition, key[0])
+									else:
+										off_condition = '%s and %s>=0' % (off_condition, key[0])
+								if key[2]<0:
+									if i==0:
+										off_condition = '%s %s<=0' % (off_condition, key[0])
+									else:
+										off_condition = '%s and %s<=0' % (off_condition, key[0])
+							else:
+								if key[2]>0:
+									if i==0:
+										off_condition = '%s %s<0' % (off_condition, key[0])
+									else:
+										off_condition = '%s and %s<0' % (off_condition, key[0])
+								if key[2]<0:
+									if i==0:
+										off_condition = '%s %s>0' % (off_condition, key[0])
+									else:
+										off_condition = '%s and %s>0' % (off_condition, key[0])
+						off_condition = '%s)' % off_condition
+						
+						# -- expression
+						expression = '%s %s*%s if %s and %s else ' % (expression, on_var, off_var, on_condition, off_condition)
+					# -- expression
+					expression = '%s 0.0' % expression
+					'''
 				
 				# create shape_key
 				if not sh_key_name in ob.data.shape_keys.key_blocks.keys():
