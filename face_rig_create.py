@@ -2972,9 +2972,12 @@ class face_shape_keys:
 		('brow_raiser_out.l', 'brow_out_L', 'LOC_Y', 1, 'brow_out_blend.l', 'brow_mid_L', 'LOC_Y', 'abs1', 'off'), # 'brow_mid_L', 'LOC_Y', 1
 		('brow_raiser.l', 'brow_mid_L', 'LOC_Y', 1, 'brow_raiser_blend.l'),
 		('brow_raiser_in.l', 'brow_in_L', 'LOC_Y', 1, 'brow_raiser_in_blend.l', 'brow_mid_L', 'LOC_Y', 'abs1', 'off'),# 'brow_mid_L', 'LOC_Y', 1
+		#brow_gatherer
 		('brow_gatherer', '', '', '', 'head_blend.m'),
-		('brow_gatherer.r', 'brow_gather_R', 'LOC_Y', 1, 'brow_gatherer_blend.r'),
-		('brow_gatherer.l', 'brow_gather_L', 'LOC_Y', 1, 'brow_gatherer_blend.l'),
+		#('brow_gatherer.r', 'brow_gather_R', 'LOC_Y', 1, 'brow_gatherer_blend.r'),
+		('brow_gatherer.r', 'LIST', {'on':[('brow_gather_R', 'LOC_Y', 1)], 'off':[('brow_mid_R', 'LOC_Y', -1), ('brow_in_R', 'LOC_Y', -1)],'off_factor': 'max', 'vtx_grp': 'brow_gatherer_blend.r'}),
+		#('brow_gatherer.l', 'brow_gather_L', 'LOC_Y', 1, 'brow_gatherer_blend.l'),
+		('brow_gatherer.l', 'LIST', {'on':[('brow_gather_L', 'LOC_Y', 1)], 'off':[('brow_mid_L', 'LOC_Y', -1), ('brow_in_L', 'LOC_Y', -1)],'off_factor': 'max', 'vtx_grp': 'brow_gatherer_blend.l'}),
 		('brow_lower', '', '', '', 'head_blend.m'),
 		('brow_lower_out', '', '', '', 'head_blend.m'),
 		('brow_lower_in', '', '', '', 'head_blend.m'),
@@ -6545,6 +6548,14 @@ class eye_limits:
 		data['max_z.l'] = self.l_cns.max_z
 		data['min_z.l'] = self.l_cns.min_z
 		
+		#jaw
+		data['jaw_open'] = self.rig_arm['jaw_open']
+		data['jaw_side'] = self.rig_arm['jaw_side']
+		data['jaw_incline'] = self.rig_arm['jaw_incline']
+		data['jaw_fwd'] = self.rig_arm['jaw_fwd']
+		data['jaw_back'] = self.rig_arm['jaw_back']
+		data['jaw_chew'] = self.rig_arm['jaw_chew']
+		
 		jsn = json.dumps(data, sort_keys=True, indent=4)
 		data_fale = open(path, 'w')
 		data_fale.write(jsn)
@@ -6572,6 +6583,13 @@ class eye_limits:
 		self.l_cns.min_x = data['min_x.l']
 		self.l_cns.max_z = data['max_z.l']
 		self.l_cns.min_z = data['min_z.l']
+		#jaw
+		self.rig_arm['jaw_open'] = data['jaw_open']
+		self.rig_arm['jaw_side'] = data['jaw_side']
+		self.rig_arm['jaw_incline'] = data['jaw_incline']
+		self.rig_arm['jaw_fwd'] = data['jaw_fwd']
+		self.rig_arm['jaw_back'] = data['jaw_back']
+		self.rig_arm['jaw_chew'] = data['jaw_chew']
 		
 		self.apply_limits()
 		

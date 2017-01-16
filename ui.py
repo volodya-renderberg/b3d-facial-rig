@@ -279,8 +279,8 @@ class FACIALRIG_import_export(bpy.types.Panel):
 		
 		#eye_limits.import_export
 		col = layout.column(align = 1)
-		col.operator("eye_limits.import_export", text = 'Export Eye Limits').action = 'export'
-		col.operator("eye_limits.import_export", text = 'Import Eye Limits').action = 'import'
+		col.operator("eye_limits.import_export", text = 'Export Eye/Jaw Limits').action = 'export'
+		col.operator("eye_limits.import_export", text = 'Import Eye/Jaw Limits').action = 'import'
 		
 
 class FACE_rig_help(bpy.types.Operator):
