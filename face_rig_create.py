@@ -17,11 +17,10 @@ class passport:
 	
 	def __init__(self):
 		self.text_name = 'rig_meta_data'
-		try:
+		if self.text_name in bpy.data.texts:
 			self.text = bpy.data.texts[self.text_name]
-		except:
-			pass
-			#self.text = bpy.data.texts.new(self.text_name)
+		else:
+			self.text_name = None
 			
 	def make_passport(self):
 		try:
@@ -38,6 +37,7 @@ class passport:
 			print(passp[1])
 	
 	def read_passport(self, context, dict_name):
+		string = None
 		try:
 			string = self.text.as_string()
 		except:
@@ -2844,6 +2844,7 @@ class face_armature:
 		targ.data_path = '["%s"]' % open_name
 		
 		return(True, 'Line Driver created for Jaw!')
+
 		
 class face_shape_keys:
 	def __init__(self):
@@ -2855,6 +2856,8 @@ class face_shape_keys:
 		self.label_tmp_bones = ['vtx_lip_grp_set', 'vtx_brow_in_set', 'vtx_brow_out_set', 'vtx_nose_set']
 		
 		self.central_sh_keys = ['jaw_open_C', 'jaw_side_R', 'lip_side.r', 'jaw_fwd', 'jaw_back', 'jaw_chew', 'chin_wrinkle', 'mouth_stretch', 'lip_down', 'lip_raise', 'lip_funnel', 'lip_close']
+		
+		self.ather_shape_keys = ['lip_side.l', 'jaw_side_open_R', 'jaw_side_open_L', 'jaw_side_L']
 		
 		self.ather_shape_keys_data_list = [
 		('eye_r', 'pupil_extension_r', 'pupil_R', 'LOC_Y', 1, ''),
@@ -3054,6 +3057,48 @@ class face_shape_keys:
 		'lid_squint':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lid_squint',
 		'chin_wrinkle':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/chin_wrinkle',
 		'mouth_stretch':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/mouth_stretch',
+		'brow_raiser_out':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/brow_raiser_out',
+		'brow_raiser_in':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/brow_raiser_in',
+		'brow_lower':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/brow_lower',
+		'brow_lower_out':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/brow_lower_out',
+		'brow_lower_in':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/brow_lower_in',
+		'jaw_side_R':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/jaw_side_r',
+		'jaw_open_C':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/jaw_open_c',
+		'jaw_back':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/jaw_back',
+		'jaw_fwd':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/jaw_fwd',
+		'lip_smile':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_smile',
+		'lip_frown':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_frown',
+		'lip_stretch':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_stretch',
+		'lip_pucker':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_pucker',
+		'lip_down':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_down',
+		'lip_raise':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_raise',
+		'lip_side.r':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_side-r',
+		'lip_upper_raiser':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_upper_raiser',
+		'lip_lower_depressor':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_lower_depressor',
+		'lip_upper_roll':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_upper_roll',
+		'lip_upper_roll_in':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_upper_roll_in',
+		'lip_lower_roll':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_lower_roll',
+		'lip_lower_roll_in':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_lower_roll_in',
+		'lip_close':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_close',
+		'lip_pinch':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_pinch',
+		'lip_upper_sqz':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_upper_sqz',
+		'lip_lower_sqz':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_lower_sqz',
+		'lip_funnel':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/lip_funnel',
+		'nose_sneer':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/nose_sneer',
+		'nostril_dilator':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/nostril_dilator',
+		'nostril_compressor':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/nostril_compressor',
+		'cheek_puff':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/cheek_puff',
+		'cheek_suck':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/cheek_suck',
+		'cheek_sqz':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/cheek_sqz',
+		'cheek_raise':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/cheek_raise',
+		'blink_up_lid':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/blink_up_lid',
+		'blink_low_lid':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/blink_low_lid',
+		'goggle_up_lid':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/goggle_up_lid',
+		'goggle_low_lid':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/goggle_low_lid',
+		'autolid_low':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/autolid_low',
+		'autolid_up':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/autolid_up',
+		'autolid_out':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/autolid_out',
+		'autolid_in':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/autolid_in',
 		}
 		
 		self.shape_keys_vtx_grp = [
@@ -4638,7 +4683,7 @@ class face_shape_keys:
 		
 		return(True, 'Baked Shape Key: %s' % target)
 	
-	def bake_shape_keys(self, context, ob, shape_key_list): #1)bake from exist vertex_group, 2)set the head_blend.m vertex_group
+	def bake_shape_keys(self, context, ob, shape_key_list, new_vtx_grp = 'head_blend.m'): #1)bake from exist vertex_group, 2)set the head_blend.m vertex_group
 		pass
 		# -- rig to EDIT mode
 		rig_obj = bpy.data.objects[G.rig_name]
@@ -4680,7 +4725,7 @@ class face_shape_keys:
 					target.data[v.index].co[1] = basis_v[1] + (target_v[1] - basis_v[1])*vtx_group.weight(v.index)
 					target.data[v.index].co[2] = basis_v[2] + (target_v[2] - basis_v[2])*vtx_group.weight(v.index)
 			print('"%s" Bake!' % target_name)
-			target.vertex_group = 'head_blend.m'
+			target.vertex_group = new_vtx_grp
 			target.value = 0.0
 			
 		return(True, 'ok!')
@@ -5495,6 +5540,9 @@ class face_shape_keys:
 			return(True, 'Ok!')
 			#return(False, 'Not Sides!')
 		
+		cent_to_side = {}
+		new_central_name = new_shape_key_name
+		cent_to_side[new_central_name] = []
 		for side_name in self.central_side_shape_keys[target]:
 			#10
 			#get befor, after shape_keys
@@ -5521,6 +5569,8 @@ class face_shape_keys:
 			if not new_shape_key_name in sh_keys:
 				shkey = ob.shape_key_add(name=new_shape_key_name, from_mix=True)
 				shkey.vertex_group = ob.data.shape_keys.key_blocks[side_name].vertex_group
+				
+			cent_to_side[new_central_name].append(new_shape_key_name)
 				
 			#--make vtx co
 			for v in ob.data.vertices:
@@ -5674,6 +5724,33 @@ class face_shape_keys:
 				FC.modifiers.remove(fmod)
 			except:
 				pass
+			
+		# text data block
+		try:
+			text = bpy.data.texts['rig_meta_data']
+		except:
+			text = bpy.data.texts.new('rig_meta_data')
+			
+		string = text.as_string()
+		
+		if string:
+			data = json.loads(string)
+			try:
+				cent_to_side_blends = data['center_to_side_blends']
+			except:
+				cent_to_side_blends = {}
+				
+		else:
+			data = {}
+			cent_to_side_blends = {}
+			
+		for key in cent_to_side:
+			cent_to_side_blends[key] = cent_to_side[key]
+
+		data['center_to_side_blends'] = cent_to_side_blends
+			
+		text.clear()
+		text.write(json.dumps(data, sort_keys=True, indent=4))
 
 		return(True, 'Ok!')
 		
@@ -6592,5 +6669,489 @@ class eye_limits:
 		self.rig_arm['jaw_chew'] = data['jaw_chew']
 		
 		self.apply_limits()
+		
+		return(True, 'Ok!')
+	
+class export_to_unity(face_shape_keys, face_armature):
+	def __init__(self):
+		self.asset_name = False
+		self.export_codes = {
+		'Open':[('jaw.cnt', 'LOC_Y', -1)],
+		'Smile.r':[('lip_R', 'LOC_Y', 1), ('cheek_R', 'LOC_Y', 1)],
+		'Smile.l':[('lip_L', 'LOC_Y', 1), ('cheek_L', 'LOC_Y', 1)],
+		'BrowsDown.r':[('brow_mid_R', 'LOC_Y', -1)],
+		'BrowsDown.l':[('brow_mid_L', 'LOC_Y', -1)],
+		'BrowsUp.r':[('brow_mid_R', 'LOC_Y', 1)],
+		'BrowsUp.l':[('brow_mid_L', 'LOC_Y', 1)],
+		'BrowsCenterUp.r':[('brow_in_R', 'LOC_Y', 1)],
+		'BrowsCenterUp.l':[('brow_in_L', 'LOC_Y', 1)],
+		'BrowsOuterUp.r':[('brow_out_R', 'LOC_Y', 1)],
+		'BrowsOuterUp.l':[('brow_out_L', 'LOC_Y', 1)],
+		'Sneer.r':[('nose_R', 'LOC_Y', 1)],
+		'Sneer.l':[('nose_L', 'LOC_Y', 1)],
+		'JawLeft':[('jaw.cnt', 'LOC_X', 1)],
+		'JawRight':[('jaw.cnt', 'LOC_X', -1)],
+		'JawFront':[('back_fwd_chew', 'LOC_X', 1)],
+		'MouthLeft':[('lip_M', 'LOC_X', 1)],
+		'MouthRight':[('lip_M', 'LOC_X', -1)],
+		'Dimple':[('dimpler', 'LOC_Y', 1)],
+		'ChinRaise':[('lip_M', 'LOC_Y', 1)],
+		'Kiss':[('lips', 'LOC_X', 1)],
+		'Funnel':[('funnel', 'LOC_Y', 1)],
+		'Frown.r':[('lip_R', 'LOC_Y', -1)],
+		'Frown.l':[('lip_L', 'LOC_Y', -1)],
+		'M':[('lip_up_roll', 'LOC_Y', -1), ('lip_low_roll', 'LOC_Y', 1)],
+		'Puff.r':[('cheek_R', 'LOC_X', -1)],
+		'Puff.l':[('cheek_L', 'LOC_X', 1)],
+		'Chew':[('back_fwd_chew', 'LOC_Y', 1)],
+		'MouthPress':[('lip_up_raise', 'LOC_Y', -1), ('lip_low_depress', 'LOC_Y', -1)],
+		'Stretch.r':[('lip_R', 'LOC_X', -1)],
+		'Stretch.l':[('lip_L', 'LOC_X', 1)],
+		'LipLowerDown.r':[('lip_low_depress_R', 'LOC_Y', 1)],
+		'LipLowerDown.l':[('lip_low_depress_L', 'LOC_Y', 1)],
+		'LipUpperUp.r':[('lip_up_raise_R', 'LOC_Y', 1)],
+		'LipUpperUp.l':[('lip_up_raise_L', 'LOC_Y', 1)],
+		'EyeUp.r':[('up', 'r', '')],
+		'EyeUp.l':[('up', 'l', '')],
+		'EyeDown.r':[('low', 'r', '')],
+		'EyeDown.l':[('low', 'l', '')],
+		'EyeRight.r':[('out', 'r', '')],
+		'EyeRight.l':[('in', 'l', '')],
+		'EyeLeft.r':[('in', 'r', '')],
+		'EyeLeft.l':[('out', 'l', '')],
+		'EyeOpen.r':[('blink_R', 'LOC_Y', -1), ('blink_R', 'LOC_X', -1)],
+		'EyeOpen.l':[('blink_L', 'LOC_Y', -1), ('blink_L', 'LOC_X', -1)],
+		'EyeSquint.r':[('lid_squint_R', 'LOC_Y', 1)],
+		'EyeSquint.l':[('lid_squint_L', 'LOC_Y', 1)],
+		'EyeBlink.r':[('blink_R', 'LOC_Y', 1), ('blink_R', 'LOC_X', 1)],
+		'EyeBlink.l':[('blink_L', 'LOC_Y', 1), ('blink_L', 'LOC_X', 1)],
+		}
+		
+		self.using_shape_keys = [
+		'jaw_fwd',
+		#'jaw_back',
+		'jaw_chew',
+		#'lip_down',
+		'lip_raise',
+		'lip_side.r',
+		'lip_side.l',
+		'lip_smile.r',
+		'lip_smile.l',
+		'lip_frown.r',
+		'lip_frown.l',
+		'lip_stretch.r',
+		'lip_stretch.l',
+		'lip_pucker',
+		'lip_upper_raiser.r',
+		'lip_upper_raiser.l',
+		'lip_lower_depressor.r',
+		'lip_lower_depressor.l',
+		'lip_upper_roll_in',
+		'lip_lower_roll_in',
+		'dimpler',
+		'lip_upper_sqz',
+		'lip_lower_sqz',
+		'lip_funnel',
+		'nose_sneer.r',
+		'nose_sneer.l',
+		'cheek_puff.r',
+		'cheek_puff.l',
+		'cheek_raise.r',
+		'cheek_raise.l',
+		'lid_squint.r',
+		'lid_squint.l',
+		'brow_raiser.r',
+		'brow_raiser.l',
+		'brow_raiser_in.r',
+		'brow_raiser_in.l',
+		'brow_raiser_out.r',
+		'brow_raiser_out.l',
+		'brow_lower.r',
+		'brow_lower.l',
+		'blink_up_lid.r',
+		'blink_up_lid.l',
+		'blink_low_lid.r',
+		'blink_low_lid.l',
+		'goggle_up_lid.r',
+		'goggle_up_lid.l',
+		'goggle_low_lid.r',
+		'goggle_low_lid.l',
+		'autolid_low.r',
+		'autolid_low.l',
+		'autolid_up.r',
+		'autolid_up.l',
+		'autolid_out.r',
+		'autolid_out.l',
+		'autolid_in.r',
+		'autolid_in.l',
+		'jaw_open_C',
+		'jaw_side_R',
+		'jaw_side_L',
+		'jaw_side_open_R',
+		'jaw_side_open_L',
+		]
+		
+		self.face_shape_keys_add_data_list = [
+		('autolid_low.r', 'low', 'r', '', ''),
+		('autolid_low.l', 'low', 'l', '', ''),
+		('autolid_up.r', 'up', 'r', '', ''),
+		('autolid_up.l', 'up', 'l', '', ''),
+		('autolid_out.r', 'out', 'r', '', ''),
+		('autolid_out.l', 'out', 'l', '', ''),
+		('autolid_in.r', 'in', 'r', '', ''),
+		('autolid_in.l', 'in', 'l', '', ''),
+		('jaw_open_C', 'jaw.cnt', 'LOC_Y', -1, ''),
+		('jaw_side_R', 'jaw.cnt', 'LOC_X', -1, '', 'jaw.cnt', 'LOC_Y', -1, 'off'),
+		('jaw_side_L', 'jaw.cnt', 'LOC_X', 1, '', 'jaw.cnt', 'LOC_Y', -1, 'off'),
+		('jaw_side_open_R', 'jaw.cnt', 'LOC_X', -1, '', 'jaw.cnt', 'LOC_Y', -1, 'on'),
+		('jaw_side_open_L', 'jaw.cnt', 'LOC_X', 1, '', 'jaw.cnt', 'LOC_Y', -1, 'on')
+		]
+		
+		face_shape_keys.__init__(self)
+		face_armature.__init__(self)
+		
+	def export_meta_data(self, context, directory):
+		out_data = {}
+		
+		#Get Inbetweens
+		list_of_inbetweens = []
+		res, mess = passport().read_passport(context, 'list_of_inbetweens')
+		if res:
+			pass
+		res, mess = passport().read_passport(context, 'center_to_side_blends')
+		if res:
+			pass
+		
+		#Forms / 
+		for data in (self.face_shape_keys_data_list + self.face_shape_keys_add_data_list):
+			if not data[0] in self.using_shape_keys:
+				continue
+			
+			out_data[data[0]] = {}
+			
+			if data[1]== 'LIST':
+				on_list = []
+				off_list = []
+				on_expression = ''
+				off_expression = '1'
+				#on
+				for tpl in data[2]['on']:
+					for key in self.export_codes:
+						for tupple in self.export_codes[key]:
+							if tupple == tpl:
+								on_list.append(key)
+				#on_expression
+				if len(on_list)>1:
+					on_expression = 'max%s' % str(tuple(on_list)).replace('\'', '').replace('\"', '')
+				else:
+					on_expression = on_list[0]
+					
+				#off
+				if data[2].get('off'):
+					for tpl in data[2]['off']:
+						for key in self.export_codes:
+							for tupple in self.export_codes[key]:
+								if tupple == tpl:
+									off_list.append(key)
+				#off_expression
+				off_factor = data[2].get('off_factor')
+				if not off_factor:
+					off_factor = 'sum'
+				
+				if len(off_list)>1:
+					off_expression = '(1 - %s%s)' % (off_factor, str(tuple(off_list)).replace('\'', '').replace('\"', ''))
+				elif len(off_list) == 1:
+					off_expression = '(1 - %s)'% off_list[0]
+				
+				input_list = list(set(on_list + off_list))
+				out_data[data[0]]['inputs'] = input_list
+				out_data[data[0]]['expression'] = '%s*%s' % (on_expression, off_expression)
+				
+			elif len(data)==5:
+				#on
+				on_list = []
+				tpl = (data[1], data[2], data[3])
+				for key in self.export_codes:
+					for tupple in self.export_codes[key]:
+						#print(tpl, tupple)
+						if tupple == tpl:
+							on_list.append(key)
+							break
+				
+				out_data[data[0]]['inputs'] = on_list
+				try:
+					out_data[data[0]]['expression'] = '%s*1' % on_list[0]
+				except:
+					print('***', on_list, data[0])
+					
+			elif len(data)>5:
+				if data[8] == 'on':
+					on1 = ''
+					tpl = (data[1], data[2], data[3])
+					for key in self.export_codes:
+						for tupple in self.export_codes[key]:
+							#print(tpl, tupple)
+							if tupple == tpl:
+								on1 = key
+								break
+					on2 = ''
+					tpl = (data[5], data[6], data[7])
+					for key in self.export_codes:
+						for tupple in self.export_codes[key]:
+							#print(tpl, tupple)
+							if tupple == tpl:
+								on2 = key
+								break
+					
+					out_data[data[0]]['inputs'] = [on1, on2]
+					out_data[data[0]]['expression'] = '%s*%s' % (on1, on2)
+					
+				elif data[8] == 'off':
+					on = ''
+					tpl = (data[1], data[2], data[3])
+					for key in self.export_codes:
+						for tupple in self.export_codes[key]:
+							#print(tpl, tupple)
+							if tupple == tpl:
+								on = key
+								break
+					
+					if isinstance(data[7], int):
+						off = ''
+						tpl = (data[5], data[6], data[7])
+						for key in self.export_codes:
+							for tupple in self.export_codes[key]:
+								#print('###', tpl, tupple)
+								if tupple == tpl:
+									off = key
+									break
+						if off:
+							out_data[data[0]]['inputs'] = [on, off]
+							out_data[data[0]]['expression'] = '%s*(1 - %s)' % (on, off)
+						if not off:
+							out_data[data[0]]['inputs'] = [on]
+							out_data[data[0]]['expression'] = '%s*1' % on
+					
+					elif data[7] == 'abs1':
+						off_list = []
+						tpl_1 = (data[5], data[6], 1)
+						tpl_2 = (data[5], data[6], -1)
+						for key in self.export_codes:
+							for tupple in self.export_codes[key]:
+								#print(tpl, tupple)
+								if tupple == tpl_1 or tupple == tpl_2:
+									off_list.append(key)
+						if len(off_list)>1:
+							out_data[data[0]]['inputs'] = [on] + off_list
+							out_data[data[0]]['expression'] = '%s*(1 - max%s)' % (on, str(tuple(off_list)).replace('\'', '').replace('\"', ''))
+						elif len(off_list) == 1:
+							out_data[data[0]]['inputs'] = [on] + off_list
+							out_data[data[0]]['expression'] = '%s*(1 - %s)' % (on, off_list[0])
+						else:
+							out_data[data[0]]['inputs'] = [on]
+							out_data[data[0]]['expression'] = '%s*1' % on
+							
+			#inbetween_expression
+			inbetween_expression = ''
+			
+			out_data[data[0]]['inbetween_expression'] = inbetween_expression
+					
+		#Bones
+		bones_data = {}
+		
+		OUTDATA = {}
+		OUTDATA['forms'] = out_data
+		OUTDATA['bones'] = bones_data
+		
+		print(json.dumps(out_data, sort_keys=True, indent=4))
+		
+		#SAVE
+		# -- path
+		if not bpy.data.filepath:
+			return(False, 'This File Not Saved!')
+		name = os.path.splitext(os.path.basename(bpy.data.filepath))[0]
+		filename = '%s.json' % name
+		save_path = os.path.join(directory, filename)
+		# -- save
+		jsn = json.dumps(OUTDATA, sort_keys=True, indent=4)
+		data_fale = open(save_path, 'w')
+		data_fale.write(jsn)
+		data_fale.close()
+		
+		return(True, 'Data save to: %s' % directory)
+		
+	def clear_shape_keys(self, context):
+		pass
+		res, mesh_data = passport().read_passport(context, 'mesh_passport')
+		if not res:
+			return(False, mesh_data)
+		body_name = mesh_data['body'][0]
+		if not body_name in bpy.data.objects:
+			return(False, 'not Body Mesh: %s'% body_name)
+		ob = bpy.data.objects[body_name]
+		# REMOVE DRIVERS
+		# -- get list drivers
+		list_shape_keys = []
+		list_shape_keys = list_shape_keys + self.central_sh_keys + self.ather_shape_keys
+		# --
+		for key in self.central_side_shape_keys:
+			list_shape_keys.append(key)
+			for name in self.central_side_shape_keys[key]:
+				list_shape_keys.append(name)
+		# --
+		res, data = passport().read_passport(context, 'list_of_inbetweens')
+		if res:
+			for key in data:
+				for weight in data[key]:
+					name = '%s%s' % (key, str(weight)[1:])
+					list_shape_keys.append(name)
+		# --
+		res, data = passport().read_passport(context, 'center_to_side_blends')
+		if res:
+			for key in data:
+				for name in data[key]:
+					list_shape_keys.append(name)
+		# -- remove
+		for name in list_shape_keys:
+			try:
+				ob.data.shape_keys.key_blocks[name].driver_remove('value')
+				ob.data.shape_keys.key_blocks[name].value = 0.0
+			except:
+				print('*** not shape key: %s' % name)
+				
+		# BAKE
+		# -- bake
+		list_shape_keys = list(set(list_shape_keys))
+		res, mes = self.bake_shape_keys(context, ob, list_shape_keys)
+		if not res:
+			return(False, mes)
+		
+		return(True, 'Clear Shape_keys!')
+	
+	def clear_control(self, context):
+		rig = bpy.data.objects[G.rig_name]
+		rig_arm = rig.data
+		pass
+		#Remove Face Metarig
+		if 'face_rig_tmp' in bpy.data.objects:
+			#get
+			tmp_rig = bpy.data.objects['face_rig_tmp']
+			tmp_arm = tmp_rig.data
+			#remove
+			bpy.data.objects.remove(tmp_rig, do_unlink = True)
+			bpy.data.armatures.remove(tmp_arm, do_unlink = True)
+		#Remove Body Metarig
+		if 'metarig' in bpy.data.objects:
+			#get
+			tmp_rig = bpy.data.objects['metarig']
+			tmp_arm = tmp_rig.data
+			#remove
+			bpy.data.objects.remove(tmp_rig, do_unlink = True)
+			bpy.data.armatures.remove(tmp_arm, do_unlink = True)
+			
+		#Remove Drivers, Constraints
+		context.scene.objects.active = rig
+		bpy.ops.object.mode_set(mode = 'POSE')
+		# -- from eye_ik
+		removed_drivers = {
+		'FR_jaw': [('rotation_euler',0), ('rotation_euler',1), ('rotation_euler',2), ('scale', 1)],
+		'FWD_jaw':[('location', 1)],
+		'Chew':[('location', 1)],
+		'FR_tongue_middle': [('rotation_euler',1)],
+		'FR_tongue_end': [('rotation_euler',1)],
+		}
+		for name in ['FR_eye_R', 'FR_eye_L', 'FR_tongue_end', 'FR_tongue_middle', 'FR_tongue_base', 'FR_jaw', 'FWD_jaw', 'Chew']:
+			# -- constraints
+			for constr in rig.pose.bones[name].constraints:
+				rig.pose.bones[name].constraints.remove(constr)
+			# -- drivers
+			#rig_obj.pose.bones['Chew'].driver_add('location', 1)
+			if name in removed_drivers:
+				for dt in removed_drivers[name]:
+					rig.pose.bones[name].driver_remove(dt[0], dt[1])
+			
+			
+		#Remove Mimics Controls
+		context.scene.objects.active = rig
+		bpy.ops.object.mode_set(mode = 'EDIT')
+		# -- get lists
+		remove_bones = [
+		'eye_L',
+		'eye_R',
+		'eye_ik',
+		'tongue_end',
+		'tongue_middle',
+		'tongue_base',
+		'jaw.cnt',
+		'eye_ik_root_parent'
+		]
+		tmp_bones = [tmp[0].replace('FRTMP_', '') for tmp in self.tmp_bones]
+		# -- remove
+		for name in (tmp_bones + remove_bones + ['FR_%s' % name for name in self.label_tmp_bones]):
+			root_name = '%s.root'%name
+			# -- remove cnt, mesh
+			for name_ in [name, root_name]:
+				# -- remove bone
+				if name_ in rig_arm.edit_bones:
+					bone = rig_arm.edit_bones[name_]
+					rig_arm.edit_bones.remove(bone)
+				# -- remove mesh
+				mesh_name = '%s.mesh'%name_
+				if mesh_name in bpy.data.objects:
+					ob = bpy.data.objects['%s.mesh'%name_]
+					bpy.data.objects.remove(ob, do_unlink = True)
+		
+		#Remove Lattice
+		lattice_list = ['lattice_str_sq', 'lattice_eye_r','lattice_eye_l']
+		#get mesh list
+		res, data = passport().read_passport(context, 'mesh_passport')
+		if not res:
+			return(False, data)
+		# -- clear modifiers
+		for key in data:
+			for mesh_name in data[key]:
+				if mesh_name in bpy.data.objects:
+					ob = bpy.data.objects[mesh_name]
+					for mod in ob.modifiers:
+						if mod.type == 'LATTICE':
+							ob.modifiers.remove(mod)
+		# -- clear Lattice
+		for name in lattice_list:
+			if name in bpy.data.objects:
+				ob = bpy.data.objects[name]
+				try:
+					bpy.data.lattices.remove(ob.data, do_unlink=True)
+				except:
+					pass
+				bpy.data.objects.remove(ob, do_unlink=True)
+		
+		return(True, 'Ok!')
+	
+	def save_blend_file(self, context, directory):
+		pass
+		#Pack
+		try:
+			bpy.ops.file.pack_all()
+		except:
+			pass
+		
+		#SAVE
+		# -- path
+		path = bpy.data.filepath
+		if not path:
+			return(False, 'This File Not Saved!')
+		filename = os.path.basename(bpy.data.filepath)
+		save_path = os.path.join(directory, filename)
+		# -- save this
+		try:
+			bpy.ops.wm.save_as_mainfile(filepath = save_path, check_existing = True)
+		except:
+			pass
+		
+		#Un Pack
+		try:
+			bpy.ops.file.unpack_all()
+		except:
+			pass
 		
 		return(True, 'Ok!')

@@ -5,7 +5,8 @@ from .tmp_armature_create import TMP_create  #
 from .face_rig_create import passport  # 
 from .face_rig_create import face_armature  # 
 from .face_rig_create import face_shape_keys  # 
-from .face_rig_create import eye_limits  # 
+from .face_rig_create import eye_limits  #
+from .face_rig_create import export_to_unity
 import webbrowser
 
 class G(object):
@@ -23,6 +24,7 @@ class G(object):
 	
 	face_armature = face_armature()
 	face_shape_keys = face_shape_keys()
+	export_to_unity = export_to_unity()
 	
 	def rebild_targets_list(self, context):
 		###
@@ -282,6 +284,57 @@ class FACIALRIG_import_export(bpy.types.Panel):
 		col.operator("eye_limits.import_export", text = 'Export Eye/Jaw Limits').action = 'export'
 		col.operator("eye_limits.import_export", text = 'Import Eye/Jaw Limits').action = 'import'
 		
+#game engine
+class FACIALRIG_to_game_engine(bpy.types.Panel):
+	bl_idname = "faceial_rig.to_game_engine"
+	bl_label = "To Game Engine"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = "TOOLS"
+	bl_category = "Facial Rig"
+	bl_options = {'DEFAULT_CLOSED'}
+	
+	def draw(self, context):
+		layout = self.layout
+		
+		col = layout.column(align = 1)
+		col.operator("to_game_engine.clear")
+		
+class TO_GAME_ENGINE_clear(bpy.types.Operator):
+	bl_idname = "to_game_engine.clear"
+	bl_label = "Export to Unity"
+	
+	directory = bpy.props.StringProperty(subtype="DIR_PATH")
+	
+	def execute(self, context):
+		# export metadata
+		res, mes = G.export_to_unity.export_meta_data(context, self.directory)
+		if not res:
+			self.report({'WARNING'}, mes)
+			return{'FINISHED'}
+		
+		# clear shape_keys
+		res, mes = G.export_to_unity.clear_shape_keys(context)
+		if not res:
+			self.report({'WARNING'}, mes)
+			return{'FINISHED'}
+		# clear control
+		res, mes = G.export_to_unity.clear_control(context)
+		if not res:
+			self.report({'WARNING'}, mes)
+			return{'FINISHED'}
+		
+		# save_blend_file
+		res, mes = G.export_to_unity.save_blend_file(context, self.directory)
+		if not res:
+			self.report({'WARNING'}, mes)
+			return{'FINISHED'}
+		
+		self.report({'INFO'}, 'Ok!')
+		return{'FINISHED'}
+	
+	def invoke(self, context, event):
+		wm = context.window_manager.fileselect_add(self)
+		return {'RUNNING_MODAL'}
 
 class FACE_rig_help(bpy.types.Operator):
 	bl_idname = "face_rig.help"
@@ -928,6 +981,7 @@ def register():
 	bpy.utils.register_class(FACIALRIG_ShapeKeys)
 	bpy.utils.register_class(FACIALRIG_Shape_Keys_Sculpt)
 	bpy.utils.register_class(FACIALRIG_import_export)
+	bpy.utils.register_class(FACIALRIG_to_game_engine)
 	bpy.utils.register_class(TMP_armature_create)
 	bpy.utils.register_class(PASSPORT_add_object)
 	bpy.utils.register_class(FACE_rig_generate)
@@ -962,6 +1016,7 @@ def register():
 	bpy.utils.register_class(FACIALRIG_import_single_sk_from_all)
 	bpy.utils.register_class(FACIALRIG_toggle_deform_bone)
 	bpy.utils.register_class(FACIALRIG_toggle_lattice_visible)
+	bpy.utils.register_class(TO_GAME_ENGINE_clear)
 	
 	###
 	set_targets_list()
@@ -973,6 +1028,7 @@ def unregister():
 	bpy.utils.unregister_class(FACIALRIG_ShapeKeys)
 	bpy.utils.unregister_class(FACIALRIG_Shape_Keys_Sculpt)
 	bpy.utils.unregister_class(FACIALRIG_import_export)
+	bpy.utils.unregister_class(FACIALRIG_to_game_engine)
 	bpy.utils.unregister_class(TMP_armature_create)	
 	bpy.utils.unregister_class(PASSPORT_add_object)	
 	bpy.utils.unregister_class(FACE_rig_generate)
@@ -1007,3 +1063,4 @@ def unregister():
 	bpy.utils.unregister_class(FACIALRIG_import_single_sk_from_all)
 	bpy.utils.unregister_class(FACIALRIG_toggle_deform_bone)
 	bpy.utils.unregister_class(FACIALRIG_toggle_lattice_visible)
+	bpy.utils.unregister_class(TO_GAME_ENGINE_clear)
