@@ -20,7 +20,7 @@ class passport:
 		if self.text_name in bpy.data.texts:
 			self.text = bpy.data.texts[self.text_name]
 		else:
-			self.text_name = None
+			self.make_passport()
 			
 	def make_passport(self):
 		try:
