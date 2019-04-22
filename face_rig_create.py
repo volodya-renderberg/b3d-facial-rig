@@ -856,6 +856,7 @@ class face_armature:
 
 		# ==== EYE_ik create constraint
 		rig_obj.data.bones['eye_ik_root_parent'].hide = True
+		rig_obj.data.bones['eye_ik_root_parent'].use_deform = False
 		# -- eye_ik add properties
 		bpy.types.PoseBone.bodyParent =  bpy.props.FloatProperty(name = "bodyParent", default = 0.0, min = 0.0, max = 1.0)
 		# -- eye_ik loc scale 
