@@ -1423,6 +1423,9 @@ class face_armature:
 			bpy.ops.object.mode_set(mode='EDIT')
 					
 			#bpy.ops.object.mode_set(mode='OBJECT')
+			if not self.HEAD_BONE_NAME in mesh.vertex_groups.keys():
+				bpy.ops.object.mode_set(mode='OBJECT')
+				return(False, 'vertex_group of head bone (%s) not found' % self.HEAD_BONE_NAME)
 			head_vtx_grp = mesh.vertex_groups[self.HEAD_BONE_NAME]
 			exclusions = ['jaw', 'ear_L', 'ear_R']
 			for label in self.label_bones:
