@@ -2770,6 +2770,7 @@ class face_armature:
 		assert ob.type == 'MESH'
 		
 		# 
+		'''
 		vertex_groups = ob.vertex_groups.keys()
 		index = 0
 		for i, g in enumerate(vertex_groups):
@@ -2785,6 +2786,13 @@ class face_armature:
 			return(True, '****** all right!')
 		else:
 			return(False, '****** This key not found!')
+		'''
+		if not vtx_grp_name in ob.vertex_groups.keys():
+			return(False, 'Group with name "%s" not found!' % vtx_grp_name)
+		context.scene.objects.active = ob
+		ob.vertex_groups.active_index = ob.vertex_groups[vtx_grp_name].index
+		bpy.ops.object.mode_set(mode = 'WEIGHT_PAINT')
+		return(True, '****** all right!')
 		
 	
 	def create_face_ui(self):
