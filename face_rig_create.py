@@ -3,12 +3,33 @@ import os
 import bpy
 import math
 import json
+import uuid
 
 from .ui_tmp import file_data
+
+#BODY_RIG_NAME = passport().passport_data['armature_passport']['body_rig']
+#HEAD_BONE_NAME = passport().passport_data['armature_passport']['head_bone']
+BROWS_VERTEX_GROUPS = [
+'brow_out_blend',
+'brow_raiser_blend',
+'brow_raiser_in_blend',
+'brow_gatherer_blend',
+'brow_lower_blend',
+'brow_lower_in_blend',
+]
+
+BROWS_SHAPE_KEYS_FOR_HAND_MAKE = {
+'brow_raiser_in':{'source':'brow_raiser', 'logic':'in'},
+'brow_raiser_out':{'source':'brow_raiser', 'logic':'out'},
+'brow_lower_in':{'source':'brow_lower', 'logic':'in'},
+'brow_lower_out':{'source':'brow_lower', 'logic':'out'},
+}
 
 class G(object):
 	user_text_name = 'current_task'
 	rig_name = 'rig'
+	#RIG_PASSPORT_KEYS = ['body_rig', 'head_bone']
+	#MESH_PASSPORT_KEYS = []
 
 class passport:
 	'''
@@ -16,17 +37,35 @@ class passport:
 	'''
 	
 	def __init__(self):
-		self.text_name = 'rig_meta_data'
+		self.ARMATURE_PASSPORT_KEYS = ['body_rig', 'head_bone', 'root_bone']
+		#self.MESH_PASSPORT_KEYS = []
+		#
+		self.text_name = 'facial_rig_meta_data'
 		if self.text_name in bpy.data.texts:
 			self.text = bpy.data.texts[self.text_name]
 		else:
-			self.make_passport()
-			
-	def make_passport(self):
-		try:
-			self.text = bpy.data.texts[self.text_name]
-		except:
+			#self.make_passport()
 			self.text = bpy.data.texts.new(self.text_name)
+			data = {
+				'armature_passport':{
+				'body_rig': 'rig',
+				'head_bone': 'DEF-head',
+				'root_bone': 'root',
+				}
+			}
+			self.text.from_string(json.dumps(data, sort_keys=True, indent=4))
+		self.reload_passport_data()
+			
+	def reload_passport_data(self):
+		if not self.text_name in bpy.data.texts:
+			self.passport_data=[]
+		else:
+			text = bpy.data.texts[self.text_name]
+			if not text.as_string():
+				self.passport_data=[]
+			else:
+				self.passport_data=json.loads(text.as_string())
+		return(self.passport_data)
 			
 	def print_passport(self, context, dict_name):
 		passp = self.read_passport(context, dict_name)
@@ -57,12 +96,21 @@ class passport:
 				
 		
 	def select_object_to_passport(self, context, dict_name, key):
-		self.make_passport()
-		objects = bpy.context.selected_objects
-		obj_names = []
-		for obj in objects:
-			obj_names.append(obj.name)
-		
+		write_data = []
+		#self.make_passport()
+		if key.endswith('_bone'):
+			bones = bpy.context.selected_pose_bones
+			if bones:
+				write_data = bones[0].name
+		elif key.endswith('rig'):
+			objects=bpy.context.selected_objects
+			if objects and objects[0].type == 'ARMATURE':
+				write_data = objects[0].name
+		else:
+			objects = bpy.context.selected_objects
+			for obj in objects:
+				write_data.append(obj.name)
+			
 		string = self.text.as_string()
 		if string:
 			data = json.loads(string)
@@ -75,12 +123,12 @@ class passport:
 			data = {}
 			work_dict = {}
 		
-		work_dict[key] = obj_names
+		work_dict[key] = write_data
 		data[dict_name] = work_dict
 		
 		self.text.clear()
 		self.text.write(json.dumps(data, sort_keys=True, indent=4))
-		
+	
 		return(True, 'all right!')
 		
 	def string_add_to_passport(self, context, dict_name, name):
@@ -105,7 +153,7 @@ class passport:
 		self.text.write(json.dumps(data, sort_keys=True, indent=4))
 		
 	def key_data_add_to_passport(self, context, dict_name, key, data, append=0):
-		self.make_passport()
+		#self.make_passport()
 		string = self.text.as_string()
 		if string:
 			global_dict = json.loads(string)
@@ -132,14 +180,27 @@ class passport:
 		self.text.clear()
 		self.text.write(json.dumps(global_dict, sort_keys=True, indent=4))
 			
-
 class face_armature:
+	mesh_passp_bones = {
+		'eye_r':('FR_eye_R',),
+		'eye_l':('FR_eye_L',),
+		'highlight_R':('FR_eye_R',),
+		'highlight_L':('FR_eye_L',),
+		'tongue':('FR_tongue_base', 'FR_tongue_middle', 'FR_tongue_end'),
+		'upper_jaw':('FR_upper_jaw',),
+		'lower_jaw':('FR_lower_jaw',),
+		}
+	
 	def __init__(self):
 		self.label_tmp_bones = ['vtx_lip_grp_set', 'vtx_brow_in_set', 'vtx_brow_out_set', 'vtx_nose_set']
 		self.label_bones = ['jaw', 'upper_jaw', 'lower_jaw', 'eye_L','eye_R','tongue_base', 'tongue_middle', 'tongue_end', 'ear_L','ear_R']
 		self.tongue_label = ['tongue_base', 'tongue_middle', 'tongue_end']
 		self.def_label = self.tongue_label + ['eye_L','eye_R', 'jaw']
 		self.eye_label = ['eye_L','eye_R']
+		self.FACE_TMP_NAME = 'face_rig_tmp'
+		self.BODY_RIG_NAME = passport().passport_data['armature_passport'].get('body_rig')
+		self.HEAD_BONE_NAME = passport().passport_data['armature_passport'].get('head_bone')
+		self.ROOT_BONE_NAME = passport().passport_data['armature_passport'].get('root_bone')
 		
 		self.tmp_bones = [
 		('FRTMP_lip_M', 'FOUR_SIDE', ''),	
@@ -307,13 +368,12 @@ class face_armature:
 
 		# ******************** copy-create bones **************************
 		# -- names
-		face_tmp_name = 'face_rig_tmp'
 		#rig_name = 'rig'
 
 		# -- tmp data
 		face_obj = None
 		try:
-			face_obj = bpy.data.objects[face_tmp_name]
+			face_obj = bpy.data.objects[self.FACE_TMP_NAME]
 		except:
 			return(False, '****** Tmp Armature Not Found!')
 		face_arm = face_obj.data
@@ -368,7 +428,7 @@ class face_armature:
 		# -- rig data
 		rig_obj = None
 		try:
-			rig_obj = bpy.data.objects[G.rig_name]
+			rig_obj = bpy.data.objects[self.BODY_RIG_NAME]
 		except:
 			return(False, '****** Rig Not Found!')
 		rig_arm = rig_obj.data
@@ -425,7 +485,7 @@ class face_armature:
 			bone.layers = tmp_layer
 			bone.use_connect = False
 			bone.use_deform = False
-			bone.parent = rig_arm.edit_bones['DEF-head']
+			bone.parent = rig_arm.edit_bones[self.HEAD_BONE_NAME]
 
 		# -- create bones
 		for label in self.label_bones:
@@ -449,7 +509,7 @@ class face_armature:
 				bone.roll = 0.0000
 				bone.use_connect = False
 				bone.use_deform = False
-				bone.parent = rig_arm.edit_bones['DEF-head']
+				bone.parent = rig_arm.edit_bones[self.HEAD_BONE_NAME]
 				
 				# Jaw Back-Forward
 				bone = rig_arm.edit_bones.new('FWD_jaw')
@@ -490,7 +550,7 @@ class face_armature:
 				bone.tail[:] = tails[label][0], tails[label][1], tails[label][2]
 				bone.roll = 0.0000
 				bone.use_connect = False
-				bone.parent = rig_arm.edit_bones['DEF-head']
+				bone.parent = rig_arm.edit_bones[self.HEAD_BONE_NAME]
 
 			# b-bone size
 			x = heads[label][0] - tails[label][0]
@@ -542,7 +602,7 @@ class face_armature:
 			pass
 		else:
 			tbone.use_connect = False
-			tbone.parent = rig_arm.edit_bones['DEF-head']
+			tbone.parent = rig_arm.edit_bones[self.HEAD_BONE_NAME]
 		# --	
 		try:
 			tbone = rig_arm.edit_bones['FR_lower_jaw']
@@ -562,7 +622,7 @@ class face_armature:
 		jaw_root_bone.head = (0,0,0)
 		jaw_root_bone.tail = (0,0,1)
 		jaw_root_bone.layers = cnt_layer
-		jaw_root_bone.parent = rig_arm.edit_bones['DEF-head']
+		jaw_root_bone.parent = rig_arm.edit_bones[self.HEAD_BONE_NAME]
 		jaw_root_bone.use_deform = False
 		jaw_root_bone.hide_select = True
 		jaw_bone = rig_arm.edit_bones.new('jaw.cnt')
@@ -684,7 +744,7 @@ class face_armature:
 		bone.head = (0, y, z)
 		bone.tail = (0, y, (z + 0.03))
 		bone.use_deform = False
-		bone.parent = rig_arm.edit_bones['DEF-head']
+		bone.parent = rig_arm.edit_bones[self.HEAD_BONE_NAME]
 
 		# -- create mesh
 		verts = ((0,-1,0), (-1,0,0), (0, 1, 0), (1,0,0), (0,-0.5,0), (0, 0.5,0), (-0.5,0,0), (0.5,0,0))
@@ -699,7 +759,7 @@ class face_armature:
 		bone_root = rig_arm.edit_bones.new('eye_ik_root_parent')
 		bone_root.head = bone.head
 		bone_root.tail = bone.tail
-		bone_root.parent = rig_arm.edit_bones['root']
+		bone_root.parent = rig_arm.edit_bones[self.ROOT_BONE_NAME]
 
 		# -- eye_ik parents, properties
 		bone0 = rig_arm.edit_bones[self.eye_label[0]]
@@ -1362,7 +1422,7 @@ class face_armature:
 			bpy.ops.object.mode_set(mode='EDIT')
 					
 			#bpy.ops.object.mode_set(mode='OBJECT')
-			head_vtx_grp = mesh.vertex_groups['DEF-head']
+			head_vtx_grp = mesh.vertex_groups[self.HEAD_BONE_NAME]
 			exclusions = ['jaw', 'ear_L', 'ear_R']
 			for label in self.label_bones:
 				if label in exclusions:
@@ -1397,7 +1457,7 @@ class face_armature:
 						
 			# apply vertex to head
 			
-			index = bpy.context.object.vertex_groups['DEF-head'].index
+			index = bpy.context.object.vertex_groups[self.HEAD_BONE_NAME].index
 			mesh.vertex_groups.active_index = index
 			bpy.ops.object.vertex_group_assign()
 			
@@ -1491,7 +1551,7 @@ class face_armature:
 		bpy.ops.object.mode_set(mode = 'OBJECT')
 
 		# -- rig to EDIT mode
-		rig_obj = bpy.data.objects['rig']
+		rig_obj = bpy.data.objects[self.BODY_RIG_NAME]
 		scene.objects.active = rig_obj
 		bpy.ops.object.mode_set(mode = 'EDIT')
 
@@ -1507,13 +1567,13 @@ class face_armature:
 		root_bone = rig_arm.edit_bones.new(root_name)
 		root_bone.head = (0,0,0)
 		root_bone.tail = (0,0,1)
-		#root_bone.parent = rig_arm.edit_bones['DEF-head']
+		#root_bone.parent = rig_arm.edit_bones[self.HEAD_BONE_NAME]
 		# parent bone (new version)
 		try:
 			root_bone.parent = rig_arm.edit_bones[parent]
 		except:
 			try:
-				root_bone.parent = rig_arm.edit_bones['DEF-head']
+				root_bone.parent = rig_arm.edit_bones[self.HEAD_BONE_NAME]
 			except:
 				pass
 		root_bone.show_wire = True
@@ -1936,8 +1996,9 @@ class face_armature:
 		pass
 		# ****** GET HEAD POS
 		# start - tmp rig in active layer
-		tmp_rig = bpy.data.objects['metarig']
-		rig = bpy.data.objects[G.rig_name]
+		#tmp_rig = bpy.data.objects['metarig']
+		tmp_rig = bpy.data.objects[self.FACE_TMP_NAME]
+		rig = bpy.data.objects[self.BODY_RIG_NAME]
 		layer = [False]*20
 		layer[0] = True
 		tmp_rig.layers = layer
@@ -1946,7 +2007,8 @@ class face_armature:
 		bpy.context.scene.objects.active = tmp_rig
 		bpy.ops.object.mode_set(mode = 'EDIT')
 		
-		head_bones = tmp_rig.data.edit_bones['head']
+		#head_bones = tmp_rig.data.edit_bones['head'] # FRTMP_root
+		head_bones = tmp_rig.data.edit_bones['FRTMP_root']
 		head = head_bones.head
 		tail = head_bones.tail
 		#print(head, tail)
@@ -2155,7 +2217,7 @@ class face_armature:
 		
 		# -- rig -> EDIT
 		try:
-			rig = bpy.data.objects[G.rig_name]
+			rig = bpy.data.objects[self.BODY_RIG_NAME]
 		except:
 			#print('****** "rig" Not Found!')
 			return(False, '****** "rig" Not Found!')
@@ -2192,7 +2254,7 @@ class face_armature:
 		# -- --  bones
 		up_name = 'up_str_sq'
 		up_bone = rig.data.edit_bones.new(up_name)
-		up_bone.parent = rig.data.edit_bones['DEF-head']
+		up_bone.parent = rig.data.edit_bones[self.HEAD_BONE_NAME]
 		up_bone.use_deform = False
 		up_bone.layers = cnt_layer
 		up_bone.head = up_head
@@ -2210,7 +2272,7 @@ class face_armature:
 		# -- --  bones
 		mid_name = 'mid_str_sq'
 		mid_bone = rig.data.edit_bones.new(mid_name)
-		mid_bone.parent = rig.data.edit_bones['DEF-head']
+		mid_bone.parent = rig.data.edit_bones[self.HEAD_BONE_NAME]
 		mid_bone.use_deform = False
 		mid_bone.layers = cnt_layer
 		mid_bone.head = mid_head
@@ -2455,7 +2517,7 @@ class face_armature:
 		matrix = latt.matrix_world
 		latt.parent = rig
 		latt.parent_type = 'BONE'
-		latt.parent_bone = 'DEF-head'
+		latt.parent_bone = self.HEAD_BONE_NAME
 		latt.matrix_world = matrix
 		if latt_r:
 			# hide
@@ -2464,7 +2526,7 @@ class face_armature:
 			matrix = latt_r.matrix_world
 			latt_r.parent = rig
 			latt_r.parent_type = 'BONE'
-			latt_r.parent_bone = 'DEF-head'
+			latt_r.parent_bone = self.HEAD_BONE_NAME
 			latt_r.matrix_world = matrix
 		if latt_l:
 			# hide
@@ -2473,7 +2535,7 @@ class face_armature:
 			matrix = latt_l.matrix_world
 			latt_l.parent = rig
 			latt_l.parent_type = 'BONE'
-			latt_l.parent_bone = 'DEF-head'
+			latt_l.parent_bone = self.HEAD_BONE_NAME
 			latt_l.matrix_world = matrix
 		
 						
@@ -2608,7 +2670,7 @@ class face_armature:
 			
 		# -- rig -> EDIT
 		try:
-			rig = bpy.data.objects[G.rig_name]
+			rig = bpy.data.objects[self.BODY_RIG_NAME]
 		except:
 			#print('****** "rig" Not Found!')
 			return(False, '****** \"rig\" Not Found!')
@@ -2726,10 +2788,15 @@ class face_armature:
 		
 	
 	def create_face_ui(self):
+		rig_id=None
 		try:
-			rig_id = bpy.data.objects[G.rig_name].data.get("rig_id")
+			rig_id = bpy.data.objects[self.BODY_RIG_NAME].data.get("rig_id")
 		except:
-			return(None, '****** not \"rig_id\"')
+			pass
+		if not rig_id:
+			bpy.types.Armature.rig_id =  bpy.props.StringProperty(name = "rig_id")
+			rig_id = str(uuid.uuid4().hex)
+			bpy.data.objects[self.BODY_RIG_NAME].data.rig_id = rig_id
 
 		if "face_ui.py" in bpy.data.texts:
 			script = bpy.data.texts["face_ui.py"]
@@ -2781,7 +2848,7 @@ class face_armature:
 	
 	def keyframe_to_root_cnt(self, context):
 		try:
-			rig = bpy.data.objects[G.rig_name]
+			rig = bpy.data.objects[self.BODY_RIG_NAME]
 		except:
 			return(False, '****** object \"rig\" not found!')
 		context.scene.objects.active = rig
@@ -2845,17 +2912,59 @@ class face_armature:
 		
 		return(True, 'Line Driver created for Jaw!')
 
-		
 class face_shape_keys:
+	central_side_shape_keys = {
+		'lip_smile':('lip_smile.r', 'lip_smile.l'),
+		'open_smile':('open_smile.r', 'open_smile.l'),
+		'lip_frown':('lip_frown.r', 'lip_frown.l'),
+		'lip_stretch':('lip_stretch.r', 'lip_stretch.l'),
+		'lip_pucker':('lip_pucker.r', 'lip_pucker.l'),
+		'lip_upper_raiser':('lip_upper_raiser.r', 'lip_upper_raiser.l'),
+		'lip_lower_depressor':('lip_lower_depressor.r', 'lip_lower_depressor.l'),
+		'lip_upper_roll':('lip_upper_roll.r', 'lip_upper_roll.l', 'lip_upper_roll.m'),
+		'lip_upper_roll_in':('lip_upper_roll_in.r', 'lip_upper_roll_in.l', 'lip_upper_roll_in.m'),
+		'lip_lower_roll':('lip_lower_roll.r', 'lip_lower_roll.l', 'lip_lower_roll.m'),
+		'lip_lower_roll_in':('lip_lower_roll_in.r', 'lip_lower_roll_in.l', 'lip_lower_roll_in.m'),
+		'lip_pinch':('lip_pinch.r', 'lip_pinch.l'),
+		'lip_upper_sqz':('lip_upper_sqz.r', 'lip_upper_sqz.l'),
+		'lip_lower_sqz':('lip_lower_sqz.r', 'lip_lower_sqz.l'),
+		'nose_sneer':('nose_sneer.r', 'nose_sneer.l'),
+		'nostril_dilator':('nostril_dilator.r', 'nostril_dilator.l'),
+		'nostril_compressor':('nostril_compressor.r', 'nostril_compressor.l'),
+		'cheek_puff':('cheek_puff.r', 'cheek_puff.l'),
+		'cheek_suck':('cheek_suck.r', 'cheek_suck.l'),
+		'cheek_sqz':('cheek_sqz.r', 'cheek_sqz.l'),
+		'cheek_raise':('cheek_raise.r', 'cheek_raise.l'),
+		'lid_squint':('lid_squint.r', 'lid_squint.l'),
+		'brow_gatherer':('brow_gatherer.r', 'brow_gatherer.l'),
+		'brow_raiser':('brow_raiser.r', 'brow_raiser.l'),
+		'brow_raiser_out':('brow_raiser_out.r', 'brow_raiser_out.l'),
+		'brow_raiser_in':('brow_raiser_in.r', 'brow_raiser_in.l'),
+		'brow_lower':('brow_lower.r', 'brow_lower.l'),
+		'brow_lower_out':('brow_lower_out.r', 'brow_lower_out.l'),
+		'brow_lower_in':('brow_lower_in.r', 'brow_lower_in.l'),
+		'autolid_low':('autolid_low.r', 'autolid_low.l'),
+		'autolid_up':('autolid_up.r', 'autolid_up.l'),
+		'autolid_out':('autolid_out.r', 'autolid_out.l'),
+		'autolid_in':('autolid_in.r', 'autolid_in.l'),
+		'blink_up_lid':('blink_up_lid.r', 'blink_up_lid.l'),
+		'blink_low_lid':('blink_low_lid.r', 'blink_low_lid.l'),
+		'goggle_up_lid':('goggle_up_lid.r', 'goggle_up_lid.l'),
+		'goggle_low_lid':('goggle_low_lid.r', 'goggle_low_lid.l'),
+		'dimpler':('dimpler.r', 'dimpler.l'),
+		}
+	
+	central_sh_keys = ['jaw_open_C', 'jaw_side_R', 'lip_side.r', 'jaw_fwd', 'jaw_back', 'jaw_chew', 'chin_wrinkle', 'mouth_stretch', 'lip_down', 'lip_raise', 'lip_funnel', 'lip_close']
+	label_tmp_bones = ['vtx_lip_grp_set', 'vtx_brow_in_set', 'vtx_brow_out_set', 'vtx_nose_set']
+	
 	def __init__(self):
+		self.BODY_RIG_NAME = passport().passport_data['armature_passport'].get('body_rig')
+		self.HEAD_BONE_NAME = passport().passport_data['armature_passport'].get('head_bone')
+		
 		self.low_num = 2
 		self.up_num = 2
 		self.out_num = 1
 		self.in_num = 1
-		
-		self.label_tmp_bones = ['vtx_lip_grp_set', 'vtx_brow_in_set', 'vtx_brow_out_set', 'vtx_nose_set']
-		
-		self.central_sh_keys = ['jaw_open_C', 'jaw_side_R', 'lip_side.r', 'jaw_fwd', 'jaw_back', 'jaw_chew', 'chin_wrinkle', 'mouth_stretch', 'lip_down', 'lip_raise', 'lip_funnel', 'lip_close']
 		
 		self.ather_shape_keys = ['lip_side.l', 'jaw_side_open_R', 'jaw_side_open_L', 'jaw_side_L']
 		
@@ -3007,47 +3116,6 @@ class face_shape_keys:
 		('goggle_low_lid.l',  'blink_L',  'LOC_Y',  -1,  'head_blend.l'),
 		]
 		
-		self.central_side_shape_keys = {
-		'lip_smile':('lip_smile.r', 'lip_smile.l'),
-		'open_smile':('open_smile.r', 'open_smile.l'),
-		'lip_frown':('lip_frown.r', 'lip_frown.l'),
-		'lip_stretch':('lip_stretch.r', 'lip_stretch.l'),
-		'lip_pucker':('lip_pucker.r', 'lip_pucker.l'),
-		'lip_upper_raiser':('lip_upper_raiser.r', 'lip_upper_raiser.l'),
-		'lip_lower_depressor':('lip_lower_depressor.r', 'lip_lower_depressor.l'),
-		'lip_upper_roll':('lip_upper_roll.r', 'lip_upper_roll.l', 'lip_upper_roll.m'),
-		'lip_upper_roll_in':('lip_upper_roll_in.r', 'lip_upper_roll_in.l', 'lip_upper_roll_in.m'),
-		'lip_lower_roll':('lip_lower_roll.r', 'lip_lower_roll.l', 'lip_lower_roll.m'),
-		'lip_lower_roll_in':('lip_lower_roll_in.r', 'lip_lower_roll_in.l', 'lip_lower_roll_in.m'),
-		'lip_pinch':('lip_pinch.r', 'lip_pinch.l'),
-		'lip_upper_sqz':('lip_upper_sqz.r', 'lip_upper_sqz.l'),
-		'lip_lower_sqz':('lip_lower_sqz.r', 'lip_lower_sqz.l'),
-		'nose_sneer':('nose_sneer.r', 'nose_sneer.l'),
-		'nostril_dilator':('nostril_dilator.r', 'nostril_dilator.l'),
-		'nostril_compressor':('nostril_compressor.r', 'nostril_compressor.l'),
-		'cheek_puff':('cheek_puff.r', 'cheek_puff.l'),
-		'cheek_suck':('cheek_suck.r', 'cheek_suck.l'),
-		'cheek_sqz':('cheek_sqz.r', 'cheek_sqz.l'),
-		'cheek_raise':('cheek_raise.r', 'cheek_raise.l'),
-		'lid_squint':('lid_squint.r', 'lid_squint.l'),
-		'brow_gatherer':('brow_gatherer.r', 'brow_gatherer.l'),
-		'brow_raiser':('brow_raiser.r', 'brow_raiser.l'),
-		'brow_raiser_out':('brow_raiser_out.r', 'brow_raiser_out.l'),
-		'brow_raiser_in':('brow_raiser_in.r', 'brow_raiser_in.l'),
-		'brow_lower':('brow_lower.r', 'brow_lower.l'),
-		'brow_lower_out':('brow_lower_out.r', 'brow_lower_out.l'),
-		'brow_lower_in':('brow_lower_in.r', 'brow_lower_in.l'),
-		'autolid_low':('autolid_low.r', 'autolid_low.l'),
-		'autolid_up':('autolid_up.r', 'autolid_up.l'),
-		'autolid_out':('autolid_out.r', 'autolid_out.l'),
-		'autolid_in':('autolid_in.r', 'autolid_in.l'),
-		'blink_up_lid':('blink_up_lid.r', 'blink_up_lid.l'),
-		'blink_low_lid':('blink_low_lid.r', 'blink_low_lid.l'),
-		'goggle_up_lid':('goggle_up_lid.r', 'goggle_up_lid.l'),
-		'goggle_low_lid':('goggle_low_lid.r', 'goggle_low_lid.l'),
-		'dimpler':('dimpler.r', 'dimpler.l'),
-		}
-		
 		self.helps_list = {
 		'brow_gatherer':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/brow_gatherer',
 		'brow_raiser':'https://sites.google.com/site/blenderfacialrig/user-manual/shape-keys/brow_raiser',
@@ -3116,27 +3184,15 @@ class face_shape_keys:
 		('autolid_in.l', 'head_blend.l'),
 		]
 		
-		self.brows_vertex_groups = [
-		'brow_out_blend',
-		'brow_raiser_blend',
-		'brow_raiser_in_blend',
-		'brow_gatherer_blend',
-		'brow_lower_blend',
-		'brow_lower_in_blend',
-		]
+		self.brows_vertex_groups = BROWS_VERTEX_GROUPS
 		
-		self.brows_shape_keys_for_hand_make = {
-		'brow_raiser_in':{'source':'brow_raiser', 'logic':'in'},
-		'brow_raiser_out':{'source':'brow_raiser', 'logic':'out'},
-		'brow_lower_in':{'source':'brow_lower', 'logic':'in'},
-		'brow_lower_out':{'source':'brow_lower', 'logic':'out'},
-		}
+		self.brows_shape_keys_for_hand_make = BROWS_SHAPE_KEYS_FOR_HAND_MAKE
 		
 		self.tmp_vertex_group = 'tmp'
 		
 		# -- rig data
 		try:
-			self.rig_obj = bpy.data.objects[G.rig_name]
+			self.rig_obj = bpy.data.objects[self.BODY_RIG_NAME]
 			self.rig_arm = self.rig_obj.data
 		except:
 			print('****** Object \"rig\" Not Found!')
@@ -3194,7 +3250,7 @@ class face_shape_keys:
 		######
 		
 		# -- rig
-		rig_obj = bpy.data.objects[G.rig_name]
+		rig_obj = bpy.data.objects[self.BODY_RIG_NAME]
 		rig_arm = rig_obj.data
 
 		# -- create vertex_groups
@@ -3330,7 +3386,7 @@ class face_shape_keys:
 			bpy.ops.object.vertex_group_select()
 			ob.vertex_groups.remove(vtx_grp)
 			# -- apply vertex to head
-			index = bpy.context.object.vertex_groups['DEF-head'].index
+			index = bpy.context.object.vertex_groups[self.HEAD_BONE_NAME].index
 			ob.vertex_groups.active_index = index
 			bpy.ops.object.vertex_group_assign()
 
@@ -3859,7 +3915,7 @@ class face_shape_keys:
 		assert ob.type == 'MESH'
 		
 		# -- rig to EDIT mode
-		rig_obj = bpy.data.objects[G.rig_name]
+		rig_obj = bpy.data.objects[self.BODY_RIG_NAME]
 		scene = bpy.context.scene
 		scene.objects.active = rig_obj
 		bpy.ops.object.mode_set(mode = 'EDIT')
@@ -4432,7 +4488,7 @@ class face_shape_keys:
 		assert ob.type == 'MESH'
 		
 		# -- rig to EDIT mode
-		rig_obj = bpy.data.objects[G.rig_name]
+		rig_obj = bpy.data.objects[self.BODY_RIG_NAME]
 		scene = bpy.context.scene
 		scene.objects.active = rig_obj
 		bpy.ops.object.mode_set(mode = 'EDIT')
@@ -4565,7 +4621,7 @@ class face_shape_keys:
 			return(False, '****** obj of Body not Mesh!')
 		
 		# -- rig to EDIT mode
-		rig_obj = bpy.data.objects[G.rig_name]
+		rig_obj = bpy.data.objects[self.BODY_RIG_NAME]
 		scene = bpy.context.scene
 		scene.objects.active = rig_obj
 		bpy.ops.object.mode_set(mode = 'EDIT')
@@ -4686,7 +4742,7 @@ class face_shape_keys:
 	def bake_shape_keys(self, context, ob, shape_key_list, new_vtx_grp = 'head_blend.m'): #1)bake from exist vertex_group, 2)set the head_blend.m vertex_group
 		pass
 		# -- rig to EDIT mode
-		rig_obj = bpy.data.objects[G.rig_name]
+		rig_obj = bpy.data.objects[self.BODY_RIG_NAME]
 		scene = bpy.context.scene
 		scene.objects.active = rig_obj
 		bpy.ops.object.mode_set(mode = 'EDIT')
@@ -5325,8 +5381,8 @@ class face_shape_keys:
 		ob_arm = bpy.context.object
 		if not ob_arm.type == 'ARMATURE':
 			return(False, 'Please select Armature')
-		arm = bpy.data.armatures['rig'] # from active obj
-		head_bone = ob_arm.pose.bones['DEF-head'] # from name
+		arm = bpy.data.armatures[self.BODY_RIG_NAME] # from active obj
+		head_bone = ob_arm.pose.bones[self.HEAD_BONE_NAME] # from name
 		
 		#get ob
 		# -- test passoport
@@ -5397,7 +5453,7 @@ class face_shape_keys:
 				shkey.data[v.index].co[2] = before_v[2] + (after_v[2] - before_v[2])*weight
 		#4
 		#Driver to DEF-head
-		if not ob_arm.animation_data.drivers.find('pose.bones["DEF-head"]["%s"]' % target):
+		if not ob_arm.animation_data.drivers.find('pose.bones["%s"]["%s"]' % (self.HEAD_BONE_NAME, target)):
 			self.driver_to_def_head(ob, ob_arm, head_bone, target)
 		
 		#5
@@ -5428,7 +5484,7 @@ class face_shape_keys:
 		
 		targ = var.targets[0]
 		targ.id = ob_arm
-		targ.data_path = 'pose.bones["DEF-head"]["%s"]' % target
+		targ.data_path = 'pose.bones["%s"]["%s"]' % (self.HEAD_BONE_NAME, target)
 		
 		#remove modifiers
 		try:
@@ -5473,7 +5529,7 @@ class face_shape_keys:
 			
 			targ = var.targets[0]
 			targ.id = ob_arm
-			targ.data_path = 'pose.bones["DEF-head"]["%s"]' % target
+			targ.data_path = 'pose.bones["%s"]["%s"]' % (self.HEAD_BONE_NAME, target)
 			
 			#remove modifiers
 			try:
@@ -5522,7 +5578,7 @@ class face_shape_keys:
 		
 		targ = var.targets[0]
 		targ.id = ob_arm
-		targ.data_path = 'pose.bones["DEF-head"]["%s"]' % target
+		targ.data_path = 'pose.bones["%s"]["%s"]' % (self.HEAD_BONE_NAME, target)
 		
 		#remove modifiers
 		try:
@@ -5589,7 +5645,7 @@ class face_shape_keys:
 					
 			#12
 			#Driver to DEF-head
-			if not ob_arm.animation_data.drivers.find('pose.bones["DEF-head"]["%s"]' % side_name):
+			if not ob_arm.animation_data.drivers.find('pose.bones["%s"]["%s"]' % (self.HEAD_BONE_NAME, side_name)):
 				self.driver_to_def_head(ob, ob_arm, head_bone, side_name)
 				
 			#13
@@ -5620,7 +5676,7 @@ class face_shape_keys:
 			
 			targ = var.targets[0]
 			targ.id = ob_arm
-			targ.data_path = 'pose.bones["DEF-head"]["%s"]' % side_name
+			targ.data_path = 'pose.bones["%s"]["%s"]' % (self.HEAD_BONE_NAME, side_name)
 			
 			#remove modifiers
 			try:
@@ -5666,7 +5722,7 @@ class face_shape_keys:
 				
 				targ = var.targets[0]
 				targ.id = ob_arm
-				targ.data_path = 'pose.bones["DEF-head"]["%s"]' % side_name
+				targ.data_path = 'pose.bones["%s"]["%s"]' % (self.HEAD_BONE_NAME, side_name)
 				
 				#remove modifiers
 				try:
@@ -5716,7 +5772,7 @@ class face_shape_keys:
 			
 			targ = var.targets[0]
 			targ.id = ob_arm
-			targ.data_path = 'pose.bones["DEF-head"]["%s"]' % side_name
+			targ.data_path = 'pose.bones["%s"]["%s"]' % (self.HEAD_BONE_NAME, side_name)
 			
 			#remove modifiers
 			try:
@@ -5761,7 +5817,7 @@ class face_shape_keys:
 			bpy.types.ArmatureBones.driver = bpy.props.FloatProperty(name = target, default = 1.0, min = 0.0, max = 1.0)
 		head_bone[target] = 0.00
 		
-		if not ob_arm.animation_data.drivers.find('pose.bones["DEF-head"]["%s"]' % target):
+		if not ob_arm.animation_data.drivers.find('pose.bones["%s"]["%s"]' % (self.HEAD_BONE_NAME, target)):
 			#read drivers
 			data_path = 'key_blocks["%s"].value' % target
 			fcurve = ob.data.shape_keys.animation_data.drivers.find(data_path)
@@ -5818,7 +5874,7 @@ class face_shape_keys:
 			
 			targ = var.targets[0]
 			targ.id = ob_arm
-			targ.data_path = 'pose.bones["DEF-head"]["%s"]' % target
+			targ.data_path = 'pose.bones["%s"]["%s"]' % (self.HEAD_BONE_NAME, target)
 			
 			return(True, f_curve)
 		else:
@@ -6388,6 +6444,9 @@ class face_shape_keys:
 
 class eye_limits:
 	def __init__(self):
+		#self.BODY_RIG_NAME = passport().passport_data['armature_passport']['body_rig']
+		#self.HEAD_BONE_NAME = passport().passport_data['armature_passport']['head_bone']
+		
 		self.limits = ('LOW','UP','SIDE')
 		# poses
 		self.start_r = False
@@ -6400,7 +6459,7 @@ class eye_limits:
 		self.right_l = False
 		# bones
 		# -- rig data
-		self.rig_obj = bpy.data.objects[G.rig_name]
+		self.rig_obj = bpy.data.objects[self.BODY_RIG_NAME]
 		self.rig_arm = self.rig_obj.data
 		# -- get pose.bones
 		try:

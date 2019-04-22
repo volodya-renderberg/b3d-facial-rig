@@ -7,7 +7,10 @@ from .face_rig_create import face_armature  #
 from .face_rig_create import face_shape_keys  # 
 from .face_rig_create import eye_limits  #
 from .face_rig_create import export_to_unity
+from .face_rig_create import BROWS_VERTEX_GROUPS
+from .face_rig_create import BROWS_SHAPE_KEYS_FOR_HAND_MAKE
 import webbrowser
+import json
 
 class G(object):
 	import_single_panel = False
@@ -22,9 +25,9 @@ class G(object):
 	brows_vtx_list = [('None',)*3]
 	brows_shape_keys_for_hand_make_list = [('None',)*3]
 	
-	face_armature = face_armature()
-	face_shape_keys = face_shape_keys()
-	export_to_unity = export_to_unity()
+	#face_armature = face_armature()
+	#face_shape_keys = face_shape_keys()
+	#export_to_unity = export_to_unity()
 	
 	def rebild_targets_list(self, context):
 		###
@@ -34,11 +37,11 @@ class G(object):
 			G.targets_list.append((key,)*3)
 		###
 		G.brows_vtx_list = []
-		for key in G.face_shape_keys.brows_vertex_groups:
+		for key in BROWS_VERTEX_GROUPS:
 			G.brows_vtx_list.append((key,)*3)
 		###
 		G.brows_shape_keys_for_hand_make_list = []
-		for key in G.face_shape_keys.brows_shape_keys_for_hand_make:
+		for key in BROWS_SHAPE_KEYS_FOR_HAND_MAKE:
 			G.brows_shape_keys_for_hand_make_list.append((key,)*3)
 		###
 		set_targets_list()
@@ -106,18 +109,53 @@ class FACIALRIG_MakeRig(bpy.types.Panel):
 	layout = 'MAKE_RIG'
 	bl_options = {'DEFAULT_CLOSED'}
 		
-	mesh_keys = face_armature().mesh_passp_bones.keys()
+	mesh_keys = face_armature.mesh_passp_bones.keys()
 	
 	def draw(self, context):
-		#mesh_keys = ['body', 'eye_r', 'eye_l', 'tongue']
+		self.mesh_keys = face_armature().mesh_passp_bones.keys()
+		#passport_data=passport().reload_passport_data()
+		passport_ob = passport()
+		#passport_ob.reload_passport_data()
+		passport_data=passport_ob.passport_data
 		layout = self.layout
+		
+		#Armature Passport
+		layout.label("Armature Passport")
+		col = layout.column(align=1)
+		for key in passport_ob.ARMATURE_PASSPORT_KEYS:
+			row = col.row(align=True)
+			if key.endswith('_bone'):
+				button_text = '%s (pose bone)' % key
+			else:
+				button_text = key
+			row.operator("passport.object_add", text = button_text).key_passp = 'armature_passport.%s' % key
+			if passport_data.get('armature_passport') and passport_data['armature_passport'].get(key):
+				try:
+					row.label(json.dumps(passport_data['armature_passport'].get(key)))
+				except Exception as e:
+					print('key', e)
+					row.label('--')
+			else:
+				row.label('--')
 
+		# Mesh Passport
 		layout.label("Mesh Passport")
 		col_passp = layout.column(align=1)
-		col_passp.operator("passport.object_add", text = 'body').key_passp = 'body'
-		for key in self.mesh_keys:
-			col_passp.operator("passport.object_add", text = key).key_passp = key
-		layout.operator("passport.object_add", text = 'Print Passport').key_passp = ''
+		#col_passp.operator("passport.object_add", text = 'body').key_passp = 'body'
+		mesh_keys = list(self.mesh_keys)
+		mesh_keys.append('body')
+		for key in sorted(mesh_keys):
+			row = col_passp.row(align=True)
+			row.operator("passport.object_add", text = key).key_passp = 'mesh_passport.%s' % key
+			if passport_data.get('mesh_passport') and passport_data['mesh_passport'].get(key):
+				try:
+					row.label(json.dumps(passport_data['mesh_passport'].get(key)))
+				except Exception as e:
+					print('key', e)
+					row.label('--')
+			else:
+				row.label('--')
+		#layout.operator("passport.object_add", text = 'Print Passport').key_passp = ''
 
 		layout.label("Armature")
 		col = layout.column(align=1)
@@ -210,7 +248,7 @@ class FACIALRIG_ShapeKeys(bpy.types.Panel):
 		col.operator('shape_key.single_vertex_groups_open_panel', icon='GROUP_VERTEX', text = '(Brows) Recalculation Single:').action = 'open'
 		
 		if G.recalculate_single_brows_vtx_group_panel:
-			for name in G.face_shape_keys.brows_vertex_groups:
+			for name in face_shape_keys().brows_vertex_groups:
 				row = col.row(align=1)
 				row.label(name)
 				row.operator("shape_key.brows_all_vertex_groups", icon='GROUP_VERTEX', text = 'To Recalculate').target = name
@@ -233,8 +271,8 @@ class FACIALRIG_Shape_Keys_Sculpt(bpy.types.Panel):
 		for key in list_shape_keys:
 			row = col.row(align = True)
 			row.operator("shape_key.edit", icon='SHAPEKEY_DATA', text = key).target = key
-			if key in G.face_shape_keys.helps_list and G.face_shape_keys.helps_list[key]:
-				row.operator('face_rig.help', icon = 'QUESTION', text = '').path = G.face_shape_keys.helps_list[key]
+			if key in face_shape_keys().helps_list and face_shape_keys().helps_list[key]:
+				row.operator('face_rig.help', icon = 'QUESTION', text = '').path = face_shape_keys().helps_list[key]
 		
 		
 class FACIALRIG_import_export(bpy.types.Panel):
@@ -307,24 +345,24 @@ class TO_GAME_ENGINE_clear(bpy.types.Operator):
 	
 	def execute(self, context):
 		# export metadata
-		res, mes = G.export_to_unity.export_meta_data(context, self.directory)
+		res, mes = export_to_unity().export_meta_data(context, self.directory)
 		if not res:
 			self.report({'WARNING'}, mes)
 			return{'FINISHED'}
 		
 		# clear shape_keys
-		res, mes = G.export_to_unity.clear_shape_keys(context)
+		res, mes = export_to_unity().clear_shape_keys(context)
 		if not res:
 			self.report({'WARNING'}, mes)
 			return{'FINISHED'}
 		# clear control
-		res, mes = G.export_to_unity.clear_control(context)
+		res, mes = export_to_unity().clear_control(context)
 		if not res:
 			self.report({'WARNING'}, mes)
 			return{'FINISHED'}
 		
 		# save_blend_file
-		res, mes = G.export_to_unity.save_blend_file(context, self.directory)
+		res, mes = export_to_unity().save_blend_file(context, self.directory)
 		if not res:
 			self.report({'WARNING'}, mes)
 			return{'FINISHED'}
@@ -382,7 +420,10 @@ class PASSPORT_add_object(bpy.types.Operator):
 			passport().print_passport(context, 'mesh_passport')
 		else:	
 			print('add obj in passport:', self.key_passp)
-			passport().select_object_to_passport(context, 'mesh_passport', self.key_passp)
+			if self.key_passp.startswith('mesh_passport.'):
+				passport().select_object_to_passport(context, 'mesh_passport', self.key_passp.replace('mesh_passport.' , ''))
+			elif self.key_passp.startswith('armature_passport.'):
+				passport().select_object_to_passport(context, 'armature_passport', self.key_passp.replace('armature_passport.' , ''))
 		return{'FINISHED'}
 	
 class FACE_rig_generate(bpy.types.Operator):
@@ -405,7 +446,7 @@ class FACE_rig_linear_jaw_driver(bpy.types.Operator):
 	bl_label = "Are You Sure?"
 	
 	def execute(self, context):
-		result = G.face_armature.linear_jaw_driver_create(context)
+		result = face_armature().linear_jaw_driver_create(context)
 		if not result[0]:
 			self.report({'WARNING'}, result[1])
 		else:
@@ -522,7 +563,7 @@ class SHAPE_keys_brows_all_vertex_groups(bpy.types.Operator):
 	target = bpy.props.StringProperty()
 	
 	def execute(self, context):
-		res, message = G.face_shape_keys.create_edit_brows_vertes_groups(context, self.target)
+		res, message = face_shape_keys().create_edit_brows_vertes_groups(context, self.target)
 		if not res:
 			self.report({'WARNING'}, message)
 		else:
@@ -569,19 +610,19 @@ class SHAPE_keys_brows_edit_shape_keys(bpy.types.Operator):
 	def execute(self, context):
 		target = context.scene.brows_shape_keys_for_hand_make_list_enum
 		if self.action == 'copy_from_central':
-			res, mess = G.face_shape_keys.edit_brows_copy_from_central(context, target)
+			res, mess = face_shape_keys().edit_brows_copy_from_central(context, target)
 			if res:
 				self.report({'INFO'}, mess)
 			else:
 				self.report({'WARNING'}, mess)
 		elif self.action == 'vertex_group':
-			res, mess = G.face_shape_keys.create_edit_brows_tmp_vertes_groups(context, target)
+			res, mess = face_shape_keys().create_edit_brows_tmp_vertes_groups(context, target)
 			if res:
 				self.report({'INFO'}, mess)
 			else:
 				self.report({'WARNING'}, mess)
 		elif self.action == 'bake':
-			res, mess = G.face_shape_keys.bake_brows_shape_key(context, target)
+			res, mess = face_shape_keys().bake_brows_shape_key(context, target)
 			if res:
 				self.report({'INFO'}, mess)
 			else:
@@ -653,10 +694,9 @@ class INSERT_inbetween(bpy.types.Operator):
 	
 	##### get list shape keys
 	central_sh_keys = ['jaw_open_C', 'jaw_fwd', 'jaw_back', 'lip_down', 'lip_raise', 'lip_funnel', 'lip_close']
-	fshk = face_shape_keys()
 	list_sh_keys = []
 	try:
-		keys = fshk.central_side_shape_keys.keys()
+		keys = face_shape_keys.central_side_shape_keys.keys()
 		list_sh_keys = list(keys)
 		list_sh_keys = list_sh_keys + central_sh_keys
 		# finish
@@ -689,11 +729,10 @@ class SHAPE_keys_insert_inbetween_panel(bpy.types.Operator):
 	bl_label = "Insert Inbetween"
 	
 	##### get list shape keys
-	fshk = G.face_shape_keys
-	central_sh_keys = fshk.central_sh_keys#['jaw_open_C', 'jaw_fwd', 'jaw_back', 'lip_down', 'lip_raise', 'lip_funnel', 'lip_close']
+	central_sh_keys = face_shape_keys.central_sh_keys#['jaw_open_C', 'jaw_fwd', 'jaw_back', 'lip_down', 'lip_raise', 'lip_funnel', 'lip_close']
 	list_sh_keys = []
 	try:
-		keys = fshk.central_side_shape_keys.keys()
+		keys = face_shape_keys.central_side_shape_keys.keys()
 		list_sh_keys = list(keys)
 		list_sh_keys = list_sh_keys + central_sh_keys
 		# finish
@@ -714,7 +753,7 @@ class SHAPE_keys_insert_inbetween_panel(bpy.types.Operator):
 		#if not result[0]:
 		#	self.report({'WARNING'}, result[1])
 		#get exists list
-		res, mess = G.face_shape_keys.get_inbetween_exists(context, self.target)
+		res, mess = face_shape_keys().get_inbetween_exists(context, self.target)
 		if not res:
 			self.report({'WARNING'}, mess)
 		else:
@@ -742,7 +781,7 @@ class SHAPE_keys_insert_inbetween(bpy.types.Operator):
 		weight_exists = G.insert_inbetween_exists
 		target = G.insert_inbetween_target
 		
-		res, mess = G.face_shape_keys.insert_inbetween(context, target, weight, weight_exists, method)
+		res, mess = face_shape_keys().insert_inbetween(context, target, weight, weight_exists, method)
 		if not res:
 			self.report({'WARNING'}, mess)
 		else:
