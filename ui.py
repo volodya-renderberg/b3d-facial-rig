@@ -327,7 +327,8 @@ class FACIALRIG_import_export(bpy.types.Panel):
 		
 		col = layout.column(align = 1)
 		col.operator("export.all_vertex_groups", icon='GROUP_VERTEX', text = 'Export All Vertex Group')
-		col.operator("import.all_vertex_groups", icon='GROUP_VERTEX', text = 'Import All Vertex Group')
+		col.operator("import.all_vertex_groups", icon='GROUP_VERTEX', text = 'Import All Vertex Group (exists)').add = False
+		col.operator("import.all_vertex_groups", icon='GROUP_VERTEX', text = 'Import All Vertex Group (add)').add = True
 		
 		#eye_limits.import_export
 		col = layout.column(align = 1)
@@ -999,8 +1000,10 @@ class IMPORT_all_vertex_groups(bpy.types.Operator):
 	bl_idname = "import.all_vertex_groups"
 	bl_label = "Are You Sure?"
 	
+	add = bpy.props.BoolProperty()
+	
 	def execute(self, context):
-		result = face_shape_keys().import_all_vertex_groups(context)
+		result = face_shape_keys().import_all_vertex_groups(context, add=self.add)
 		if not result[0]:
 			self.report({'WARNING'}, result[1])
 		return {'FINISHED'}

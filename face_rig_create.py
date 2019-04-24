@@ -6405,7 +6405,7 @@ class face_shape_keys:
 		
 		return(True, 'single vertex data imported!')
 		
-	def import_all_vertex_groups(self, context):
+	def import_all_vertex_groups(self, context, add=False):
 		pass
 		#### get 'body' obj from mesh_passport
 		ob = None
@@ -6438,11 +6438,14 @@ class face_shape_keys:
 		data_fale.close()
 		
 		for key in weight_data:
-			try:
-				vgs = ob.vertex_groups[key]
-			except:
-				print('****** vertex group \"', key, '\"not Found')
+			#
+			if not add and not key in ob.vertex_groups:
+				print('****** vertex group "%s" not Found' % key)
 				continue
+			elif add and not key in ob.vertex_groups:
+				ob.vertex_groups.new(key)
+			#
+			vgs = ob.vertex_groups[key]
 			for vtx in ob.data.vertices:
 				if str(vtx.index) in weight_data[key]:
 					vgs.add((vtx.index,), weight_data[key][str(vtx.index)], 'REPLACE')
