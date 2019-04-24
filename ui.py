@@ -99,24 +99,23 @@ class FACIALRIG_Help(bpy.types.Panel):
 		col = layout.column(align=1)
 		col.operator("face_rig.help",icon = 'QUESTION', text = 'Manual').path = 'https://sites.google.com/site/blenderfacialrig/user-manual'
 		col.operator("face_rig.help",icon = 'QUESTION', text = 'Youtube(ru)').path = 'https://www.youtube.com/playlist?list=PLaF5hl1yUd9UYmvyRC51C-C0TulaA2SnT'
-
-class FACIALRIG_MakeRig(bpy.types.Panel):
-	bl_idname = "face_rig.tools_panel"
-	bl_label = "Make Rig"
+		
+class FACIALRIG_Pasport(bpy.types.Panel):
+	bl_idname = "face_rig.pasport_panel"
+	bl_label = "Pasport"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "TOOLS"
 	bl_category = "Facial Rig"
-	layout = 'MAKE_RIG'
+	layout = 'Pasports'
 	bl_options = {'DEFAULT_CLOSED'}
-		
+	
 	mesh_keys = face_armature.mesh_passp_bones.keys()
 	
 	def draw(self, context):
 		self.mesh_keys = face_armature().mesh_passp_bones.keys()
-		#passport_data=passport().reload_passport_data()
 		passport_ob = passport()
-		#passport_ob.reload_passport_data()
 		passport_data=passport_ob.passport_data
+		
 		layout = self.layout
 		
 		#Armature Passport
@@ -156,7 +155,20 @@ class FACIALRIG_MakeRig(bpy.types.Panel):
 			else:
 				row.label('--')
 		#layout.operator("passport.object_add", text = 'Print Passport').key_passp = ''
+    
 
+class FACIALRIG_MakeRig(bpy.types.Panel):
+	bl_idname = "face_rig.tools_panel"
+	bl_label = "Make Rig"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = "TOOLS"
+	bl_category = "Facial Rig"
+	layout = 'MAKE_RIG'
+	bl_options = {'DEFAULT_CLOSED'}
+		
+	def draw(self, context):
+		layout = self.layout
+		
 		layout.label("Armature")
 		col = layout.column(align=1)
 		col.operator("face_rig.tmp_create", icon='OUTLINER_OB_ARMATURE', text = 'Create Meta Rig')
@@ -1016,6 +1028,7 @@ class LOCK_controls(bpy.types.Operator):
 	
 def register():
 	bpy.utils.register_class(FACIALRIG_Help)
+	bpy.utils.register_class(FACIALRIG_Pasport)
 	bpy.utils.register_class(FACIALRIG_MakeRig)
 	bpy.utils.register_class(FACIALRIG_ShapeKeys)
 	bpy.utils.register_class(FACIALRIG_Shape_Keys_Sculpt)
@@ -1063,6 +1076,7 @@ def register():
 	
 def unregister():
 	bpy.utils.unregister_class(FACIALRIG_Help)
+	bpy.utils.unregister_class(FACIALRIG_Pasport)
 	bpy.utils.unregister_class(FACIALRIG_MakeRig)
 	bpy.utils.unregister_class(FACIALRIG_ShapeKeys)
 	bpy.utils.unregister_class(FACIALRIG_Shape_Keys_Sculpt)
