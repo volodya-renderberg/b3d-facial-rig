@@ -93,7 +93,31 @@ class passport:
 		else:
 			#print('****** \"rig_meta_data\" is empty!')
 			return(False, '****** \"rig_meta_data\" is empty!')
-				
+		
+	def get_key(self, context, dict_name, key): # return list of objects по данному ключу словаря, даже если данные всего строка.
+		objects = []
+		ob = None
+		b, r = self.read_passport(context, dict_name)
+		if not b:
+			#print(mesh_passport[1])
+			return(b, r)
+		
+		if not key in r.keys():
+			return(False, 'Not "%s" in passport.keys' % key)
+		mesh_passport = r[key]
+		if isinstance(mesh_passport, list):
+			for name in mesh_passport:
+				if name in bpy.data.objects:
+					objects.append(bpy.data.objects[name])
+				else:
+					print('*** Object named "%s" does not exist!' % name)
+		elif isinstance(mesh_passport, str):
+			if mesh_passport in bpy.data.objects:
+				objects.append(bpy.data.objects[mesh_passport])
+			else:
+				print('*** Object named "%s" does not exist!' % mesh_passport)
+
+		return(True, objects)
 		
 	def select_object_to_passport(self, context, dict_name, key):
 		write_data = []
@@ -6127,6 +6151,11 @@ class face_shape_keys:
 				return(os.path.normpath(os.path.join(activity_path, '.all_vertex_groups_data.json')))
 			else:
 				return(os.path.normpath(os.path.join(os.path.expanduser('~'), '.all_vertex_groups_data.json')))
+		elif data_type == 'SELECTED_VERTEX_GROUPS':
+			if lineyka:
+				return(os.path.normpath(os.path.join(activity_path, '.selected_vertex_groups_data.json')))
+			else:
+				return(os.path.normpath(os.path.join(os.path.expanduser('~'), '.selected_vertex_groups_data.json')))
 		elif data_type == 'EYE_LIMITS':
 			if lineyka:
 				return(os.path.normpath(os.path.join(activity_path, '.eye_limits.json')))
@@ -6219,7 +6248,7 @@ class face_shape_keys:
 			try:
 				ob = bpy.data.objects[body_name]
 			except:
-				return(False, ('****** \"body\" object not found! ' + body_name))
+				return(False, ('****** \"body\" object not found! %s' % body_name))
 			
 			if not ob.type == 'MESH':
 				return(False, '****** \"body\" object Not Mesh!')
@@ -6249,7 +6278,112 @@ class face_shape_keys:
 		data_fale = open(path, 'w')
 		data_fale.write(jsn)
 		data_fale.close()
-		return(True, ('weight data saved to: ' + path))
+		return(True, ('weight data saved to: %s' % path))
+	
+	def export_vertex_groups_by_prefix(self, context, prefix):
+		pass
+		# (1)
+		if not prefix:
+			return(False, 'No prefix specified!')
+		# (2) get 'body' obj from mesh_passport
+		b,r = passport().get_key(context, 'mesh_passport', 'body')
+		print(b,r)
+		if not b:
+			return(b,r)
+		else:
+			if r:
+				ob=r[0]
+			else:
+				return(False, 'object "body" not defined! Look "Passport"!')
+		
+		# (3) get weights
+		print('***** export vertex_groups by prefix')
+		weight_data = {}
+		try:
+			list_vertex_groups = ob.vertex_groups.keys()
+		except:
+			return(False, '***** "%s" has no Vertex_Groups' % body_name)
+		for name in list_vertex_groups:
+			if prefix != 'all' and not name.lower().startswith(prefix.lower()):
+				continue
+			weight_data[name] = {}
+			vertex_group = ob.vertex_groups[name]
+			for vtx in ob.data.vertices:
+				try:
+					weight_data[name][vtx.index] = vertex_group.weight(vtx.index)
+				except:
+					pass
+			print('added: %s' % name)
+			
+		if not weight_data:
+			return(False, 'weight_data is empty!')
+				
+		# (4) get save path
+		path = self.get_data_save_path('ALL_VERTEX_GROUPS')
+		
+		# (5)
+		if not os.path.exists(path):
+			with open(path, 'w') as outfile:
+				json.dump({}, outfile)
+			
+		with open(path) as json_file:
+			data = json.load(json_file)
+		
+		for key in weight_data:
+			data[key]=weight_data[key]
+			
+		# (6)
+		with open(path, 'w') as outfile:
+			json.dump(data, outfile)
+		
+		return(True, ('weight data saved to: %s' % path))
+	
+	def import_vertex_groups_by_prefix(self, context, prefix, add=False):
+		pass
+		# (1)
+		if not prefix:
+			return(False, 'No prefix specified!')
+		# (2) get 'body' obj from mesh_passport
+		b,r = passport().get_key(context, 'mesh_passport', 'body')
+		print(b,r)
+		if not b:
+			return(b,r)
+		else:
+			if r:
+				ob=r[0]
+			else:
+				return(False, 'object "body" not defined! Look "Passport"!')
+			
+		# (3) get save path
+		path = self.get_data_save_path('ALL_VERTEX_GROUPS')
+		if not os.path.exists(path):
+			return(False, 'Data file not found!')
+		
+		# (4) read weight data
+		with open(path) as json_file:
+			weight_data = json.load(json_file)
+		
+		for key in weight_data:
+			#
+			if prefix != 'all' and not key.lower().startswith(prefix.lower()):
+				continue
+			if not add and not key in ob.vertex_groups:
+				print('****** vertex group "%s" not Found' % key)
+				continue
+			if add and not key in ob.vertex_groups:
+				ob.vertex_groups.new(key)
+			#
+			vgs = ob.vertex_groups[key]
+			for vtx in ob.data.vertices:
+				if str(vtx.index) in weight_data[key]:
+					vgs.add((vtx.index,), weight_data[key][str(vtx.index)], 'REPLACE')
+				else:
+					try:
+						vgs.remove(vtx.index)
+					except:
+						pass
+		
+		return(True, 'Loaded vertex_groups by prefix: "%s"' % prefix)
 		
 	def import_single_vertex_data(self, context, target):
 		pass

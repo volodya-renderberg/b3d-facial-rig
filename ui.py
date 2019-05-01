@@ -325,10 +325,13 @@ class FACIALRIG_import_export(bpy.types.Panel):
 			row.operator("facial_rig.import_single_sk_from_all", text = 'Import')
 			row.operator("facial_rig.import_single_sk_from_all_panel", text = 'Close').action = 'close'
 		
+		#col = layout.column(align = 1)
+		#col.operator("export.all_vertex_groups", icon='GROUP_VERTEX', text = 'Export All Vertex Group')
+		#col.operator("import.all_vertex_groups", icon='GROUP_VERTEX', text = 'Import All Vertex Group').add = False
+		
 		col = layout.column(align = 1)
-		col.operator("export.all_vertex_groups", icon='GROUP_VERTEX', text = 'Export All Vertex Group')
-		col.operator("import.all_vertex_groups", icon='GROUP_VERTEX', text = 'Import All Vertex Group (exists)').add = False
-		col.operator("import.all_vertex_groups", icon='GROUP_VERTEX', text = 'Import All Vertex Group (add)').add = True
+		col.operator("export.vertex_groups_by_prefix", icon='GROUP_VERTEX', text = 'Export Vertex Groups').prefix = 'all'
+		col.operator("import.vertex_groups_by_prefix", icon='GROUP_VERTEX', text = 'Import Vertex Groups').prefix = 'all'
 		
 		#eye_limits.import_export
 		col = layout.column(align = 1)
@@ -883,7 +886,41 @@ class Export_all_vertex_groups(bpy.types.Operator):
 		else:
 			self.report({'INFO'}, data)
 		return {'FINISHED'}
-
+	
+class Export_vertex_groups_by_prefix(bpy.types.Operator):
+	bl_idname = "export.vertex_groups_by_prefix"
+	bl_label = "Export Vertex Groups by Prefix"
+	
+	prefix = bpy.props.StringProperty()
+	
+	def execute(self, context):
+		result, data = face_shape_keys().export_vertex_groups_by_prefix(context, self.prefix)
+		if not result:
+			self.report({'WARNING'}, data)
+		else:
+			self.report({'INFO'}, data)
+		return {'FINISHED'}
+	
+	def invoke(self, context, event):
+		return context.window_manager.invoke_props_dialog(self)
+	
+class IMPORT_vertex_groups_by_prefix(bpy.types.Operator):
+	bl_idname = "import.vertex_groups_by_prefix"
+	bl_label = "Import Vertex Groups by Prefix"
+	
+	prefix = bpy.props.StringProperty()
+	add = bpy.props.BoolProperty()
+	
+	def execute(self, context):
+		result, data = face_shape_keys().import_vertex_groups_by_prefix(context, self.prefix, add=self.add)
+		if not result:
+			self.report({'WARNING'}, data)
+		else:
+			self.report({'INFO'}, data)
+		return {'FINISHED'}
+	
+	def invoke(self, context, event):
+		return context.window_manager.invoke_props_dialog(self)
 
 class IMPORT_single_data_open_panel(bpy.types.Operator):
 	bl_idname = "import.single_data_open_panel"
@@ -1072,6 +1109,8 @@ def register():
 	bpy.utils.register_class(FACIALRIG_toggle_deform_bone)
 	bpy.utils.register_class(FACIALRIG_toggle_lattice_visible)
 	bpy.utils.register_class(TO_GAME_ENGINE_clear)
+	bpy.utils.register_class(Export_vertex_groups_by_prefix)
+	bpy.utils.register_class(IMPORT_vertex_groups_by_prefix)
 	
 	###
 	set_targets_list()
@@ -1120,3 +1159,5 @@ def unregister():
 	bpy.utils.unregister_class(FACIALRIG_toggle_deform_bone)
 	bpy.utils.unregister_class(FACIALRIG_toggle_lattice_visible)
 	bpy.utils.unregister_class(TO_GAME_ENGINE_clear)
+	bpy.utils.unregister_class(Export_vertex_groups_by_prefix)
+	bpy.utils.unregister_class(IMPORT_vertex_groups_by_prefix)
